@@ -9,7 +9,13 @@ class JavaLangType {
 
     @Test
     void create_default_string() {
-        assertThat(factory.type(String.class).create()).isEqualTo("string1");
-        assertThat(factory.type(String.class).create()).isEqualTo("string2");
+        assertThat(factory.create(String.class)).isEqualTo("string1");
+        assertThat(factory.create(String.class)).isEqualTo("string2");
+    }
+
+    @Test
+    void create_default_int() {
+        assertThat(factory.create(int.class)).isEqualTo(1);
+        assertThat(factory.create(Integer.class)).isEqualTo(2);
     }
 }

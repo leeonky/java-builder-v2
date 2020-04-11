@@ -10,7 +10,7 @@ public class Shape<T> {
     }
 
     public T newInstance(int sequence) {
-        return type.newInstance();
+        return getType().newInstance();
     }
 
     public BeanClass<T> getType() {
