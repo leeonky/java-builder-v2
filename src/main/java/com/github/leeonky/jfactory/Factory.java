@@ -7,9 +7,11 @@ import java.util.Map;
 
 public class Factory {
     private final Map<Class<?>, Integer> sequences = new HashMap<>();
+    private final Map<Class<?>, Component<?>> components = new HashMap<>();
 
-    public <T> Requirement<T> type(Class<T> type) {
-        return new Requirement<>(this, ValueShapes.shapeOf(type).orElseThrow(IllegalStateException::new));
+    @SuppressWarnings("unchecked")
+    public <T> Builder<T> type(Class<T> type) {
+        return new Builder<>(this, (Component<T>) components.computeIfAbsent(type, Component::createComponent));
     }
 
     public <T> int getSequence(BeanClass<T> type) {
