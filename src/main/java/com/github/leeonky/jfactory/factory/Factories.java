@@ -1,5 +1,6 @@
-package com.github.leeonky.jfactory;
+package com.github.leeonky.jfactory.factory;
 
+import com.github.leeonky.jfactory.Argument;
 import com.github.leeonky.util.BeanClass;
 import com.github.leeonky.util.GenericType;
 import com.github.leeonky.util.PropertyWriter;
@@ -8,19 +9,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-class ValueFactories {
-    private static final Map<Class<?>, Factory<?>> buildIns = new HashMap<Class<?>, Factory<?>>() {{
+public class Factories {
+    private static final Map<Class<?>, ObjectFactory<?>> buildIns = new HashMap<Class<?>, ObjectFactory<?>>() {{
         put(String.class, new StringFactory());
         put(Integer.class, new IntegerFactory());
         put(int.class, new IntegerFactory());
     }};
 
     @SuppressWarnings("unchecked")
-    static <T> Optional<Factory<T>> componentOf(Class<T> type) {
-        return Optional.ofNullable((Factory<T>) buildIns.get(type));
+    public static <T> Optional<ObjectFactory<T>> of(Class<T> type) {
+        return Optional.ofNullable((ObjectFactory<T>) buildIns.get(type));
     }
 
-    static class ValueFactory<T> extends Factory<T> {
+    static class ValueFactory<T> extends ObjectFactory<T> {
         ValueFactory() {
             super(null);
         }
@@ -41,15 +42,15 @@ class ValueFactories {
 
     static class StringFactory extends ValueFactory<String> {
         @Override
-        public String newInstance(String property, int sequence) {
-            return (property == null ? "string" : property) + sequence;
+        protected String newInstance(Argument argument) {
+            return (argument.getProperty() == null ? "string" : argument.getProperty()) + argument.getSequence();
         }
     }
 
     static class IntegerFactory extends ValueFactory<Integer> {
         @Override
-        public Integer newInstance(String property, int sequence) {
-            return sequence;
+        public Integer create(Argument argument) {
+            return argument.getSequence();
         }
     }
 }

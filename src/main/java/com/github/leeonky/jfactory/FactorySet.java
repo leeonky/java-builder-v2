@@ -1,5 +1,6 @@
 package com.github.leeonky.jfactory;
 
+import com.github.leeonky.jfactory.factory.ObjectFactory;
 import com.github.leeonky.util.BeanClass;
 
 import java.util.HashMap;
@@ -7,22 +8,28 @@ import java.util.Map;
 
 public class FactorySet {
     private final Map<Class<?>, Integer> sequences = new HashMap<>();
-    private final Map<Class<?>, Factory<?>> components = new HashMap<>();
+    private final Map<Class<?>, ObjectFactory<?>> components = new HashMap<>();
+
+    public <T> Builder<T> type(Class<T> type) {
+        return new Builder<>(this, queryObjectFactory(type));
+    }
 
     @SuppressWarnings("unchecked")
-    public <T> Builder<T> type(Class<T> type) {
-        return new Builder<>(this, (Factory<T>) components.computeIfAbsent(type, Factory::create));
+    private <T> ObjectFactory<T> queryObjectFactory(Class<T> type) {
+        return (ObjectFactory<T>) components.computeIfAbsent(type, ObjectFactory::create);
     }
 
     <T> int getSequence(BeanClass<T> type) {
-        synchronized (FactorySet.class) {
-            int sequence = sequences.getOrDefault(type.getType(), 0) + 1;
-            sequences.put(type.getType(), sequence);
-            return sequence;
-        }
+        int sequence = sequences.getOrDefault(type.getType(), 0) + 1;
+        sequences.put(type.getType(), sequence);
+        return sequence;
     }
 
     public <T> T create(Class<T> type) {
         return type(type).create();
+    }
+
+    public <T> Factory<T> factory(Class<T> type) {
+        return queryObjectFactory(type);
     }
 }

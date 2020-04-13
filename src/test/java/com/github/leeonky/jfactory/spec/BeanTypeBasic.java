@@ -1,6 +1,7 @@
 package com.github.leeonky.jfactory.spec;
 
 import com.github.leeonky.jfactory.FactorySet;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.junit.jupiter.api.Test;
@@ -38,10 +39,24 @@ class BeanTypeBasic {
                 .hasFieldOrPropertyWithValue("intValue", 100);
     }
 
+    @Test
+    void support_create_bean_with_constructor() {
+        factorySet.factory(BeanWithNoDefaultConstructor.class).construct(arg -> new BeanWithNoDefaultConstructor("hello"));
+
+        assertThat(factorySet.type(BeanWithNoDefaultConstructor.class).create())
+                .hasFieldOrPropertyWithValue("stringValue", "hello");
+    }
+
     @Getter
     @Setter
     public static class Bean {
         private String stringValue;
         private int intValue;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class BeanWithNoDefaultConstructor {
+        private final String stringValue;
     }
 }

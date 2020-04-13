@@ -1,20 +1,23 @@
 package com.github.leeonky.jfactory;
 
+import com.github.leeonky.jfactory.factory.ObjectFactory;
+import com.github.leeonky.jfactory.producer.FactoryProducer;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Builder<T> {
     private final FactorySet factorySet;
-    private final Factory<T> factory;
+    private final ObjectFactory<T> objectFactory;
     private final Map<String, Object> inputProperties = new LinkedHashMap<>();
 
-    Builder(FactorySet factorySet, Factory<T> factory) {
+    Builder(FactorySet factorySet, ObjectFactory<T> objectFactory) {
         this.factorySet = factorySet;
-        this.factory = factory;
+        this.objectFactory = objectFactory;
     }
 
     public T create() {
-        FactoryProducer<T> producer = new FactoryProducer<>(factory, null, factorySet.getSequence(factory.getType()));
+        FactoryProducer<T> producer = new FactoryProducer<>(objectFactory, null, factorySet.getSequence(objectFactory.getType()));
         producer.specifyProperties(inputProperties);
         return producer.produce();
     }
@@ -26,7 +29,7 @@ public class Builder<T> {
     }
 
     private Builder<T> copy() {
-        Builder<T> newBuilder = new Builder<>(factorySet, factory);
+        Builder<T> newBuilder = new Builder<>(factorySet, objectFactory);
         newBuilder.inputProperties.putAll(inputProperties);
         return newBuilder;
     }
