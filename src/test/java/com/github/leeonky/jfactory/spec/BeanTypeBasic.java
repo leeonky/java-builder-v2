@@ -27,7 +27,7 @@ class BeanTypeBasic {
     }
 
     @Test
-    void specify_properties() {
+    void support_specify_properties() {
         assertThat(factorySet.type(Bean.class).property("stringValue", "hello").create())
                 .hasFieldOrPropertyWithValue("stringValue", "hello");
 
@@ -40,11 +40,21 @@ class BeanTypeBasic {
     }
 
     @Test
-    void support_create_bean_with_constructor() {
-        factorySet.factory(BeanWithNoDefaultConstructor.class).construct(arg -> new BeanWithNoDefaultConstructor("hello"));
+    void support_customized_constructor() {
+        factorySet.factory(BeanWithNoDefaultConstructor.class).construct(arg -> new BeanWithNoDefaultConstructor("hello", 100));
 
         assertThat(factorySet.type(BeanWithNoDefaultConstructor.class).create())
-                .hasFieldOrPropertyWithValue("stringValue", "hello");
+                .hasFieldOrPropertyWithValue("stringValue", "hello")
+                .hasFieldOrPropertyWithValue("intValue", 100);
+    }
+
+    @Test
+    void support_specify_params() {
+        factorySet.factory(BeanWithNoDefaultConstructor.class).construct(arg -> new BeanWithNoDefaultConstructor(arg.param("p"), arg.getSequence()));
+
+        assertThat(factorySet.type(BeanWithNoDefaultConstructor.class).param("p", "hello").create())
+                .hasFieldOrPropertyWithValue("stringValue", "hello")
+                .hasFieldOrPropertyWithValue("intValue", 1);
     }
 
     @Getter
@@ -58,5 +68,6 @@ class BeanTypeBasic {
     @AllArgsConstructor
     public static class BeanWithNoDefaultConstructor {
         private final String stringValue;
+        private int intValue;
     }
 }

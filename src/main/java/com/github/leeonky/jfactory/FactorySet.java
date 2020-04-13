@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class FactorySet {
     private final Map<Class<?>, Integer> sequences = new HashMap<>();
-    private final Map<Class<?>, ObjectFactory<?>> components = new HashMap<>();
+    private final Map<Class<?>, ObjectFactory<?>> objectFactories = new HashMap<>();
 
     public <T> Builder<T> type(Class<T> type) {
         return new Builder<>(this, queryObjectFactory(type));
@@ -16,7 +16,7 @@ public class FactorySet {
 
     @SuppressWarnings("unchecked")
     private <T> ObjectFactory<T> queryObjectFactory(Class<T> type) {
-        return (ObjectFactory<T>) components.computeIfAbsent(type, ObjectFactory::create);
+        return (ObjectFactory<T>) objectFactories.computeIfAbsent(type, ObjectFactory::create);
     }
 
     <T> int getSequence(BeanClass<T> type) {
