@@ -1,0 +1,47 @@
+package com.github.leeonky.jfactory.spec;
+
+import com.github.leeonky.jfactory.FactorySet;
+import lombok.Getter;
+import lombok.Setter;
+import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class BeanTypeBasic {
+    private FactorySet factorySet = new FactorySet();
+
+    @Test
+    void default_creation() {
+        assertThat(factorySet.create(Bean.class))
+                .hasFieldOrPropertyWithValue("stringValue", "stringValue1")
+                .hasFieldOrPropertyWithValue("intValue", 1)
+        ;
+
+        assertThat(factorySet.create(Bean.class))
+                .hasFieldOrPropertyWithValue("stringValue", "stringValue2")
+                .hasFieldOrPropertyWithValue("intValue", 2)
+        ;
+    }
+
+    @Test
+    void specify_properties() {
+        assertThat(factorySet.type(Bean.class).property("stringValue", "hello").create())
+                .hasFieldOrPropertyWithValue("stringValue", "hello");
+
+        assertThat(factorySet.type(Bean.class).properties(new HashMap<String, Object>() {{
+            put("stringValue", "hello");
+            put("intValue", 100);
+        }}).create())
+                .hasFieldOrPropertyWithValue("stringValue", "hello")
+                .hasFieldOrPropertyWithValue("intValue", 100);
+    }
+
+    @Getter
+    @Setter
+    public static class Bean {
+        private String stringValue;
+        private int intValue;
+    }
+}

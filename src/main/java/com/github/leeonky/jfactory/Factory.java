@@ -1,28 +1,30 @@
 package com.github.leeonky.jfactory;
 
 import com.github.leeonky.util.BeanClass;
+import com.github.leeonky.util.PropertyWriter;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public class Factory {
-    private final Map<Class<?>, Integer> sequences = new HashMap<>();
-    private final Map<Class<?>, Component<?>> components = new HashMap<>();
+public class Factory<T> {
+    private final BeanClass<T> type;
 
-    @SuppressWarnings("unchecked")
-    public <T> Builder<T> type(Class<T> type) {
-        return new Builder<>(this, (Component<T>) components.computeIfAbsent(type, Component::createComponent));
+    Factory(BeanClass<T> type) {
+        this.type = type;
     }
 
-    public <T> int getSequence(BeanClass<T> type) {
-        synchronized (Factory.class) {
-            int sequence = sequences.getOrDefault(type.getType(), 0) + 1;
-            sequences.put(type.getType(), sequence);
-            return sequence;
-        }
+    static <T> Factory<T> create(Class<T> type) {
+        return ValueFactories.componentOf(type).orElseGet(() -> new Factory<>(BeanClass.create(type)));
     }
 
-    public <T> T create(Class<T> type) {
-        return type(type).create();
+    public T newInstance(String property, int sequence) {
+        return getType().newInstance();
+    }
+
+    public BeanClass<T> getType() {
+        return type;
+    }
+
+    public Map<String, PropertyWriter<T>> getPropertyWriters() {
+        return type.getPropertyWriters();
     }
 }

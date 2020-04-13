@@ -8,20 +8,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class ValueComponents {
-    private static final Map<Class<?>, Component<?>> buildIns = new HashMap<Class<?>, Component<?>>() {{
-        put(String.class, new StringComponent());
-        put(Integer.class, new IntegerComponent());
-        put(int.class, new IntegerComponent());
+class ValueFactories {
+    private static final Map<Class<?>, Factory<?>> buildIns = new HashMap<Class<?>, Factory<?>>() {{
+        put(String.class, new StringFactory());
+        put(Integer.class, new IntegerFactory());
+        put(int.class, new IntegerFactory());
     }};
 
     @SuppressWarnings("unchecked")
-    public static <T> Optional<Component<T>> componentOf(Class<T> type) {
-        return Optional.ofNullable((Component<T>) buildIns.get(type));
+    static <T> Optional<Factory<T>> componentOf(Class<T> type) {
+        return Optional.ofNullable((Factory<T>) buildIns.get(type));
     }
 
-    static class ValueComponent<T> extends Component<T> {
-        ValueComponent() {
+    static class ValueFactory<T> extends Factory<T> {
+        ValueFactory() {
             super(null);
         }
 
@@ -29,7 +29,7 @@ public class ValueComponents {
         @SuppressWarnings("unchecked")
         public BeanClass<T> getType() {
             return BeanClass.create((Class<T>) GenericType.createGenericType(getClass().getGenericSuperclass()).getGenericTypeParameter(0)
-                    .orElseThrow(() -> new IllegalStateException(String.format("Invalid ValueComponent declaration '%s' should specify generic type or override getType() method", getClass().getName())))
+                    .orElseThrow(() -> new IllegalStateException(String.format("Invalid ValueFactory declaration '%s' should specify generic type or override getType() method", getClass().getName())))
                     .getRawType());
         }
 
@@ -39,14 +39,14 @@ public class ValueComponents {
         }
     }
 
-    static class StringComponent extends ValueComponent<String> {
+    static class StringFactory extends ValueFactory<String> {
         @Override
         public String newInstance(String property, int sequence) {
             return (property == null ? "string" : property) + sequence;
         }
     }
 
-    static class IntegerComponent extends ValueComponent<Integer> {
+    static class IntegerFactory extends ValueFactory<Integer> {
         @Override
         public Integer newInstance(String property, int sequence) {
             return sequence;
