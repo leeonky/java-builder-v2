@@ -19,7 +19,13 @@ public class Builder<T> {
     }
 
     public T create() {
-        return new FactoryProducer<>(objectFactory, null, factorySet.getSequence(objectFactory.getType()), params, inputProperties).produce();
+        T object = new FactoryProducer<>(objectFactory, null, factorySet.getSequence(objectFactory.getType()), params, inputProperties).produce();
+        factorySet.getDataRepository().save(object);
+        return object;
+    }
+
+    public T query() {
+        return factorySet.getDataRepository().query(objectFactory.getType(), inputProperties).stream().findFirst().orElse(null);
     }
 
     public Builder<T> property(String property, Object value) {
