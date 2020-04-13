@@ -1,6 +1,6 @@
 package com.github.leeonky.jfactory;
 
-import com.github.leeonky.jfactory.repo.QueryExpression;
+import com.github.leeonky.jfactory.util.QueryExpression;
 import com.github.leeonky.util.BeanClass;
 
 import java.util.Collection;

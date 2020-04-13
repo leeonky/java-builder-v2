@@ -1,4 +1,4 @@
-package com.github.leeonky.jfactory.factory;
+package com.github.leeonky.jfactory.util;
 
 import com.github.leeonky.jfactory.Argument;
 import com.github.leeonky.util.BeanClass;

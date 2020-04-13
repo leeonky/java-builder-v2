@@ -24,10 +24,32 @@ class CreateWithRepo {
         assertThat(builder.query()).isNull();
     }
 
+    @Test
+    void support_queried_object_with_nested_specified_property() {
+        Bean helloBean = factorySet.type(Bean.class).property("stringValue", "hello").create();
+
+        assertThat(factorySet.type(Beans.class).property("bean.stringValue", "hello").create())
+                .hasFieldOrPropertyWithValue("bean", helloBean);
+    }
+
+    @Test
+    void should_create_nested_with_property_and_value_when_query_return_empty() {
+        Beans beans = factorySet.type(Beans.class).property("bean.stringValue", "hello").create();
+
+        assertThat(beans.getBean())
+                .hasFieldOrPropertyWithValue("stringValue", "hello");
+    }
+
     @Getter
     @Setter
     public static class Bean {
         private String stringValue;
         private int intValue;
+    }
+
+    @Getter
+    @Setter
+    public static class Beans {
+        private Bean bean;
     }
 }

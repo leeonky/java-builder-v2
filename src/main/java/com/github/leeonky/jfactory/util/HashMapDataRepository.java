@@ -1,4 +1,4 @@
-package com.github.leeonky.jfactory.repo;
+package com.github.leeonky.jfactory.util;
 
 import com.github.leeonky.jfactory.DataRepository;
 

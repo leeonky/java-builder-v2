@@ -1,8 +1,9 @@
 package com.github.leeonky.jfactory;
 
-import com.github.leeonky.jfactory.factory.ObjectFactory;
-import com.github.leeonky.jfactory.producer.FactoryProducer;
+import com.github.leeonky.jfactory.util.FactoryProducer;
+import com.github.leeonky.jfactory.util.ObjectFactory;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -19,13 +20,22 @@ public class Builder<T> {
     }
 
     public T create() {
-        T object = new FactoryProducer<>(objectFactory, null, factorySet.getSequence(objectFactory.getType()), params, inputProperties).produce();
+        T object = producer().produce();
         factorySet.getDataRepository().save(object);
         return object;
     }
 
+    public FactoryProducer<T> producer() {
+        return new FactoryProducer<>(factorySet, objectFactory, null, factorySet.getSequence(objectFactory.getType()), params, inputProperties);
+    }
+
     public T query() {
-        return factorySet.getDataRepository().query(objectFactory.getType(), inputProperties).stream().findFirst().orElse(null);
+        Collection<T> collection = queryAll();
+        return collection.isEmpty() ? null : collection.iterator().next();
+    }
+
+    public Collection<T> queryAll() {
+        return factorySet.getDataRepository().query(objectFactory.getType(), inputProperties);
     }
 
     public Builder<T> property(String property, Object value) {

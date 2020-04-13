@@ -1,8 +1,13 @@
-package com.github.leeonky.jfactory.repo;
+package com.github.leeonky.jfactory.util;
 
+import com.github.leeonky.jfactory.Builder;
+import com.github.leeonky.jfactory.FactorySet;
+import com.github.leeonky.jfactory.Producer;
 import com.github.leeonky.util.BeanClass;
 import com.github.leeonky.util.PropertyReader;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,5 +56,21 @@ public class QueryExpression<T> {
         if (condition == null)
             return Objects.equals(propertyValue, propertyReader.tryConvert(value));
         return new QueryExpression(propertyReader.getPropertyTypeWrapper(), condition, value).matches(propertyValue);
+    }
+
+    public void queryOrCreateNested(FactorySet factorySet, String k, Object v, Map<String, Producer<?>> propertyProducers) {
+        if (condition == null)
+            propertyProducers.put(k, new ValueProducer<>(v));
+        else {
+            Collection<?> collection = toBuilder(factorySet, v, beanClass.getPropertyReader(baseName).getPropertyType()).queryAll();
+            if (collection.isEmpty())
+                propertyProducers.put(baseName, toBuilder(factorySet, v, beanClass.getPropertyWriter(baseName).getPropertyType()).producer());
+            else
+                propertyProducers.put(baseName, new ValueProducer<>(collection.iterator().next()));
+        }
+    }
+
+    private Builder<?> toBuilder(FactorySet factorySet, Object v, Class<?> propertyType) {
+        return factorySet.type(propertyType).property(condition, v);
     }
 }

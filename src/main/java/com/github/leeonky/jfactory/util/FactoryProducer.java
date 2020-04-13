@@ -1,9 +1,8 @@
-package com.github.leeonky.jfactory.producer;
+package com.github.leeonky.jfactory.util;
 
 import com.github.leeonky.jfactory.Argument;
+import com.github.leeonky.jfactory.FactorySet;
 import com.github.leeonky.jfactory.Producer;
-import com.github.leeonky.jfactory.factory.Factories;
-import com.github.leeonky.jfactory.factory.ObjectFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,7 +15,7 @@ public class FactoryProducer<T> extends Producer<T> {
     private final Map<String, Object> params;
     private final Map<String, Producer<?>> propertyProducers = new LinkedHashMap<>();
 
-    public FactoryProducer(ObjectFactory<T> objectFactory,
+    public FactoryProducer(FactorySet factorySet, ObjectFactory<T> objectFactory,
                            String property, int sequence, Map<String, Object> params, Map<String, Object> properties) {
         super(property);
         this.objectFactory = objectFactory;
@@ -25,8 +24,9 @@ public class FactoryProducer<T> extends Producer<T> {
         objectFactory.getPropertyWriters()
                 .forEach((name, propertyWriter) ->
                         Factories.of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
-                                propertyProducers.put(name, new FactoryProducer<>(fieldFactory, name, sequence, params, Collections.emptyMap()))));
-        properties.forEach((k, v) -> propertyProducers.put(k, new ValueProducer<>(v)));
+                                propertyProducers.put(name, new FactoryProducer<>(factorySet, fieldFactory, name, sequence, params, Collections.emptyMap()))));
+        properties.forEach((k, v) ->
+                new QueryExpression<>(objectFactory.getType(), k, v).queryOrCreateNested(factorySet, k, v, propertyProducers));
     }
 
     @Override
