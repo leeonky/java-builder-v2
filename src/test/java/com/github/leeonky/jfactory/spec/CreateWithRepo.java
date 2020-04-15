@@ -34,8 +34,10 @@ class CreateWithRepo {
 
     @Test
     void should_create_nested_with_property_and_value_when_query_return_empty() {
-        Beans beans = factorySet.type(Beans.class).property("bean.stringValue", "hello").create();
+        Beans notMatched = factorySet.type(Beans.class).create();
 
+        Beans beans = factorySet.type(BeansWrapper.class).property("beans.bean.stringValue", "hello").create().getBeans();
+        assertThat(beans).isNotEqualTo(notMatched);
         assertThat(beans.getBean())
                 .hasFieldOrPropertyWithValue("stringValue", "hello");
     }
@@ -51,5 +53,11 @@ class CreateWithRepo {
     @Setter
     public static class Beans {
         private Bean bean;
+    }
+
+    @Getter
+    @Setter
+    public static class BeansWrapper {
+        private Beans beans;
     }
 }

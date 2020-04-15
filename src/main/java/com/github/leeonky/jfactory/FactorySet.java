@@ -1,7 +1,7 @@
 package com.github.leeonky.jfactory;
 
+import com.github.leeonky.jfactory.util.BeanFactory;
 import com.github.leeonky.jfactory.util.HashMapDataRepository;
-import com.github.leeonky.jfactory.util.ObjectFactory;
 import com.github.leeonky.util.BeanClass;
 
 import java.util.HashMap;
@@ -10,7 +10,7 @@ import java.util.Objects;
 
 public class FactorySet {
     private final Map<Class<?>, Integer> sequences = new HashMap<>();
-    private final Map<Class<?>, ObjectFactory<?>> objectFactories = new HashMap<>();
+    private final Map<Class<?>, BeanFactory<?>> objectFactories = new HashMap<>();
     private final DataRepository dataRepository;
 
     public FactorySet(DataRepository dataRepository) {
@@ -26,8 +26,8 @@ public class FactorySet {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> ObjectFactory<T> queryObjectFactory(Class<T> type) {
-        return (ObjectFactory<T>) objectFactories.computeIfAbsent(type, ObjectFactory::create);
+    private <T> BeanFactory<T> queryObjectFactory(Class<T> type) {
+        return (BeanFactory<T>) objectFactories.computeIfAbsent(type, BeanFactory::create);
     }
 
     <T> int getSequence(BeanClass<T> type) {

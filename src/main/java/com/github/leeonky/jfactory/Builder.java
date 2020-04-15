@@ -1,7 +1,7 @@
 package com.github.leeonky.jfactory;
 
+import com.github.leeonky.jfactory.util.BeanFactory;
 import com.github.leeonky.jfactory.util.FactoryProducer;
-import com.github.leeonky.jfactory.util.ObjectFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,13 +10,13 @@ import java.util.Map;
 
 public class Builder<T> {
     private final FactorySet factorySet;
-    private final ObjectFactory<T> objectFactory;
+    private final BeanFactory<T> beanFactory;
     private final Map<String, Object> inputProperties = new LinkedHashMap<>();
     private final Map<String, Object> params = new HashMap<>();
 
-    Builder(FactorySet factorySet, ObjectFactory<T> objectFactory) {
+    Builder(FactorySet factorySet, BeanFactory<T> beanFactory) {
         this.factorySet = factorySet;
-        this.objectFactory = objectFactory;
+        this.beanFactory = beanFactory;
     }
 
     public T create() {
@@ -26,7 +26,7 @@ public class Builder<T> {
     }
 
     public FactoryProducer<T> producer() {
-        return new FactoryProducer<>(factorySet, objectFactory, null, factorySet.getSequence(objectFactory.getType()), params, inputProperties);
+        return new FactoryProducer<>(factorySet, beanFactory, null, factorySet.getSequence(beanFactory.getType()), params, inputProperties);
     }
 
     public T query() {
@@ -35,7 +35,7 @@ public class Builder<T> {
     }
 
     public Collection<T> queryAll() {
-        return factorySet.getDataRepository().query(objectFactory.getType(), inputProperties);
+        return factorySet.getDataRepository().query(beanFactory.getType(), inputProperties);
     }
 
     public Builder<T> property(String property, Object value) {
@@ -45,7 +45,7 @@ public class Builder<T> {
     }
 
     private Builder<T> copy() {
-        Builder<T> newBuilder = new Builder<>(factorySet, objectFactory);
+        Builder<T> newBuilder = new Builder<>(factorySet, beanFactory);
         newBuilder.inputProperties.putAll(inputProperties);
         newBuilder.params.putAll(params);
         return newBuilder;

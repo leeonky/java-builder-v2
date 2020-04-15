@@ -11,12 +11,12 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-public class Factories {
+class ValueFactories {
     private static final LocalDate LOCAL_DATE_START = LocalDate.parse("1996-01-23");
     private static final LocalDateTime LOCAL_DATE_TIME_START = LocalDateTime.parse("1996-01-23T00:00:00");
     private static final LocalTime LOCAL_TIME_START = LocalTime.parse("00:00:00");
     private static final Instant INSTANT_START = Instant.parse("1996-01-23T00:00:00Z");
-    private static final Map<Class<?>, ObjectFactory<?>> buildIns = new HashMap<Class<?>, ObjectFactory<?>>() {{
+    private static final Map<Class<?>, BeanFactory<?>> buildIns = new HashMap<Class<?>, BeanFactory<?>>() {{
         put(Byte.class, new ValueFactory<Byte>() {
             @Override
             public Byte create(Argument argument) {
@@ -135,11 +135,11 @@ public class Factories {
     }};
 
     @SuppressWarnings("unchecked")
-    public static <T> Optional<ObjectFactory<T>> of(Class<T> type) {
-        return Optional.ofNullable((ObjectFactory<T>) buildIns.get(type));
+    static <T> Optional<BeanFactory<T>> of(Class<T> type) {
+        return Optional.ofNullable((BeanFactory<T>) buildIns.get(type));
     }
 
-    private static class ValueFactory<T> extends ObjectFactory<T> {
+    private static class ValueFactory<T> extends BeanFactory<T> {
         ValueFactory() {
             super(null);
         }
