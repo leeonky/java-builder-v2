@@ -8,7 +8,7 @@ public class Argument {
     private final int sequence;
     private final Map<String, Object> params = new HashMap<>();
 
-    public Argument(String property, int sequence, Map<String, Object> params) {
+    Argument(String property, int sequence, Map<String, Object> params) {
         this.property = property;
         this.sequence = sequence;
         this.params.putAll(params);
@@ -25,5 +25,9 @@ public class Argument {
     @SuppressWarnings("unchecked")
     public <T> T param(String p) {
         return (T) params.get(p);
+    }
+
+    Argument newProperty(String property) {
+        return new Argument(property, sequence, params);
     }
 }

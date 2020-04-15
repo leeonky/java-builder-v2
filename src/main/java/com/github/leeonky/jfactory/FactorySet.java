@@ -1,7 +1,5 @@
 package com.github.leeonky.jfactory;
 
-import com.github.leeonky.jfactory.util.BeanFactory;
-import com.github.leeonky.jfactory.util.HashMapDataRepository;
 import com.github.leeonky.util.BeanClass;
 
 import java.util.HashMap;

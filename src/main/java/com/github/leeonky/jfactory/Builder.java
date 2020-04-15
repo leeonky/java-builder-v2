@@ -1,8 +1,5 @@
 package com.github.leeonky.jfactory;
 
-import com.github.leeonky.jfactory.util.BeanFactory;
-import com.github.leeonky.jfactory.util.FactoryProducer;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -11,7 +8,7 @@ import java.util.Map;
 public class Builder<T> {
     private final FactorySet factorySet;
     private final BeanFactory<T> beanFactory;
-    private final Map<String, Object> inputProperties = new LinkedHashMap<>();
+    private final Map<String, Object> properties = new LinkedHashMap<>();
     private final Map<String, Object> params = new HashMap<>();
 
     Builder(FactorySet factorySet, BeanFactory<T> beanFactory) {
@@ -20,13 +17,13 @@ public class Builder<T> {
     }
 
     public T create() {
-        T object = producer().produce();
+        T object = producer(null).produce();
         factorySet.getDataRepository().save(object);
         return object;
     }
 
-    public FactoryProducer<T> producer() {
-        return new FactoryProducer<>(factorySet, beanFactory, null, factorySet.getSequence(beanFactory.getType()), params, inputProperties);
+    FactoryProducer<T> producer(String property) {
+        return new FactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params), properties);
     }
 
     public T query() {
@@ -35,25 +32,25 @@ public class Builder<T> {
     }
 
     public Collection<T> queryAll() {
-        return factorySet.getDataRepository().query(beanFactory.getType(), inputProperties);
+        return factorySet.getDataRepository().query(beanFactory.getType(), properties);
     }
 
     public Builder<T> property(String property, Object value) {
         Builder<T> newBuilder = copy();
-        newBuilder.inputProperties.put(property, value);
+        newBuilder.properties.put(property, value);
         return newBuilder;
     }
 
     private Builder<T> copy() {
         Builder<T> newBuilder = new Builder<>(factorySet, beanFactory);
-        newBuilder.inputProperties.putAll(inputProperties);
+        newBuilder.properties.putAll(properties);
         newBuilder.params.putAll(params);
         return newBuilder;
     }
 
     public Builder<T> properties(Map<String, ?> properties) {
         Builder<T> newBuilder = copy();
-        newBuilder.inputProperties.putAll(properties);
+        newBuilder.properties.putAll(properties);
         return newBuilder;
     }
 

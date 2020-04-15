@@ -1,8 +1,5 @@
-package com.github.leeonky.jfactory.util;
+package com.github.leeonky.jfactory;
 
-import com.github.leeonky.jfactory.Argument;
-import com.github.leeonky.jfactory.Factory;
-import com.github.leeonky.jfactory.Spec;
 import com.github.leeonky.util.BeanClass;
 import com.github.leeonky.util.PropertyWriter;
 
@@ -11,13 +8,13 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class BeanFactory<T> implements Factory<T> {
+class BeanFactory<T> implements Factory<T> {
     private final BeanClass<T> type;
     private Function<Argument, T> constructor = this::newInstance;
     private BiConsumer<Argument, Spec<T>> spec = (arg, spec) -> {
     };
 
-    BeanFactory(BeanClass<T> type) {
+    public BeanFactory(BeanClass<T> type) {
         this.type = type;
     }
 

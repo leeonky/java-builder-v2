@@ -1,10 +1,8 @@
-package com.github.leeonky.jfactory.util;
-
-import com.github.leeonky.jfactory.DataRepository;
+package com.github.leeonky.jfactory;
 
 import java.util.*;
 
-public class HashMapDataRepository implements DataRepository {
+class HashMapDataRepository implements DataRepository {
     private Map<Class<?>, Set<Object>> repo = new HashMap<>();
 
     @Override

@@ -1,6 +1,5 @@
-package com.github.leeonky.jfactory.util;
+package com.github.leeonky.jfactory;
 
-import com.github.leeonky.jfactory.Argument;
 import com.github.leeonky.util.BeanClass;
 import com.github.leeonky.util.GenericType;
 import com.github.leeonky.util.PropertyWriter;
@@ -135,7 +134,7 @@ class ValueFactories {
     }};
 
     @SuppressWarnings("unchecked")
-    static <T> Optional<BeanFactory<T>> of(Class<T> type) {
+    public static <T> Optional<BeanFactory<T>> of(Class<T> type) {
         return Optional.ofNullable((BeanFactory<T>) buildIns.get(type));
     }
 
