@@ -8,7 +8,7 @@ import java.util.Objects;
 
 public class FactorySet {
     private final Map<Class<?>, Integer> sequences = new HashMap<>();
-    private final Map<Class<?>, BeanFactory<?>> objectFactories = new HashMap<>();
+    private final Map<Class<?>, BeanFactory<?>> beanFactories = new HashMap<>();
     private final DataRepository dataRepository;
 
     public FactorySet(DataRepository dataRepository) {
@@ -25,7 +25,7 @@ public class FactorySet {
 
     @SuppressWarnings("unchecked")
     private <T> BeanFactory<T> queryObjectFactory(Class<T> type) {
-        return (BeanFactory<T>) objectFactories.computeIfAbsent(type, BeanFactory::create);
+        return (BeanFactory<T>) beanFactories.computeIfAbsent(type, BeanFactory::create);
     }
 
     <T> int getSequence(BeanClass<T> type) {

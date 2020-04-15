@@ -3,6 +3,8 @@ package com.github.leeonky.jfactory;
 import com.github.leeonky.util.BeanClass;
 import com.github.leeonky.util.PropertyWriter;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -10,6 +12,7 @@ import java.util.function.Function;
 
 class BeanFactory<T> implements Factory<T> {
     private final BeanClass<T> type;
+    private final Map<String, BiConsumer<Argument, Spec<T>>> mixIns = new HashMap<>();
     private Function<Argument, T> constructor = this::newInstance;
     private BiConsumer<Argument, Spec<T>> spec = (arg, spec) -> {
     };
@@ -46,11 +49,30 @@ class BeanFactory<T> implements Factory<T> {
 
     @Override
     public Factory<T> define(BiConsumer<Argument, Spec<T>> spec) {
-        this.spec = spec;
+        this.spec = Objects.requireNonNull(spec);
+        return this;
+    }
+
+    @Override
+    public Factory<T> canMixIn(String name, BiConsumer<Argument, Spec<T>> spec) {
+        mixIns.put(name, Objects.requireNonNull(spec));
         return this;
     }
 
     public void collectSpec(Argument argument, BeanSpec<T> beanSpec) {
         spec.accept(argument, beanSpec);
+    }
+
+    public void collectMixInSpecs(Argument argument, List<String> mixIns, BeanSpec<T> beanSpec) {
+        mixIns.stream()
+                .map(this::getMixIn)
+                .forEach(spec -> spec.accept(argument, beanSpec));
+    }
+
+    private BiConsumer<Argument, Spec<T>> getMixIn(String name) {
+        BiConsumer<Argument, Spec<T>> mixIn = mixIns.get(name);
+        if (mixIn == null)
+            throw new IllegalArgumentException("Mix-in `" + name + "` not exist");
+        return mixIn;
     }
 }

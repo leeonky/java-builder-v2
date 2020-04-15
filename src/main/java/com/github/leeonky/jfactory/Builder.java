@@ -1,15 +1,15 @@
 package com.github.leeonky.jfactory;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+
+import static java.util.Arrays.asList;
 
 public class Builder<T> {
     private final FactorySet factorySet;
     private final BeanFactory<T> beanFactory;
     private final Map<String, Object> properties = new LinkedHashMap<>();
     private final Map<String, Object> params = new HashMap<>();
+    private final List<String> mixIns = new ArrayList<>();
 
     Builder(FactorySet factorySet, BeanFactory<T> beanFactory) {
         this.factorySet = factorySet;
@@ -23,7 +23,7 @@ public class Builder<T> {
     }
 
     FactoryProducer<T> producer(String property) {
-        return new FactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params), properties);
+        return new FactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params), properties, mixIns);
     }
 
     public T query() {
@@ -45,6 +45,7 @@ public class Builder<T> {
         Builder<T> newBuilder = new Builder<>(factorySet, beanFactory);
         newBuilder.properties.putAll(properties);
         newBuilder.params.putAll(params);
+        newBuilder.mixIns.addAll(mixIns);
         return newBuilder;
     }
 
@@ -57,6 +58,12 @@ public class Builder<T> {
     public Builder<T> param(String name, Object value) {
         Builder<T> newBuilder = copy();
         newBuilder.params.put(name, value);
+        return newBuilder;
+    }
+
+    public Builder<T> mixIn(String... names) {
+        Builder<T> newBuilder = copy();
+        newBuilder.mixIns.addAll(asList(names));
         return newBuilder;
     }
 }
