@@ -20,6 +20,15 @@ class CustomizedBuild {
                 .hasFieldOrPropertyWithValue("stringValue", "hello");
     }
 
+    @Test
+    void support_define_build_with_arg() {
+        factorySet.factory(Bean.class).define((arg, spec) ->
+                spec.property("stringValue").value(arg.getSequence() + (int) arg.param("i")));
+
+        assertThat(factorySet.type(Bean.class).param("i", 2).create())
+                .hasFieldOrPropertyWithValue("stringValue", "3");
+    }
+
     @Getter
     @Setter
     public static class Bean {

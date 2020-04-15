@@ -1,10 +1,13 @@
 package com.github.leeonky.jfactory.spec;
 
 import com.github.leeonky.jfactory.Builder;
+import com.github.leeonky.jfactory.DataRepository;
 import com.github.leeonky.jfactory.FactorySet;
 import lombok.Getter;
 import lombok.Setter;
 import org.junit.jupiter.api.Test;
+
+import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,6 +45,14 @@ class CreateWithRepo {
                 .hasFieldOrPropertyWithValue("stringValue", "hello");
     }
 
+    @Test
+    void support_use_customized_repo() {
+        MyDataRepository dataRepository = new MyDataRepository();
+        factorySet = new FactorySet(dataRepository);
+
+        assertThat(factorySet.type(Bean.class).create()).isEqualTo(dataRepository.object);
+    }
+
     @Getter
     @Setter
     public static class Bean {
@@ -59,5 +70,23 @@ class CreateWithRepo {
     @Setter
     public static class BeansWrapper {
         private Beans beans;
+    }
+
+    private static class MyDataRepository implements DataRepository {
+        public Object object;
+
+        @Override
+        public void save(Object object) {
+            this.object = object;
+        }
+
+        @Override
+        public <T> Collection<T> queryAll(Class<T> type) {
+            return null;
+        }
+
+        @Override
+        public void clear() {
+        }
     }
 }
