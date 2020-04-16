@@ -18,12 +18,28 @@ class CustomizedBuildInDefinition {
                 .hasFieldOrPropertyWithValue("intValue", 100);
     }
 
+    @Test
+    void should_call_type_base_construct_and_definition() {
+        factorySet.factory(Bean.class).construct(arg -> new BeanSub()).define((arg, spec) -> {
+            spec.property("intValue").value(50);
+        });
+
+        assertThat(factorySet.toBuild(一个Bean.class).create())
+                .isInstanceOf(BeanSub.class)
+                .hasFieldOrPropertyWithValue("intValue", 50);
+    }
+
     @Getter
     @Setter
     public static class Bean {
         private String content;
         private String stringValue;
         private int intValue;
+    }
+
+    @Getter
+    @Setter
+    public static class BeanSub extends Bean {
     }
 
     public static class 一个Bean extends Definition<Bean> {

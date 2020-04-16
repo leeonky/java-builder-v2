@@ -14,7 +14,7 @@ class BeanFactory<T> implements Factory<T> {
     private final BeanClass<T> type;
     private final Map<String, BiConsumer<Argument, Spec<T>>> mixIns = new HashMap<>();
     private Function<Argument, T> constructor = this::newInstance;
-    private BiConsumer<Argument, Spec<T>> spec = (arg, spec) -> {
+    private BiConsumer<Argument, Spec<T>> definition = (arg, spec) -> {
     };
 
     public BeanFactory(BeanClass<T> type) {
@@ -48,19 +48,19 @@ class BeanFactory<T> implements Factory<T> {
     }
 
     @Override
-    public Factory<T> define(BiConsumer<Argument, Spec<T>> spec) {
-        this.spec = Objects.requireNonNull(spec);
+    public Factory<T> define(BiConsumer<Argument, Spec<T>> definition) {
+        this.definition = Objects.requireNonNull(definition);
         return this;
     }
 
     @Override
-    public Factory<T> canMixIn(String name, BiConsumer<Argument, Spec<T>> spec) {
-        mixIns.put(name, Objects.requireNonNull(spec));
+    public Factory<T> canMixIn(String name, BiConsumer<Argument, Spec<T>> mixIn) {
+        mixIns.put(name, Objects.requireNonNull(mixIn));
         return this;
     }
 
     public void collectSpec(Argument argument, BeanSpec<T> beanSpec) {
-        spec.accept(argument, beanSpec);
+        definition.accept(argument, beanSpec);
     }
 
     public void collectMixInSpecs(Argument argument, List<String> mixIns, BeanSpec<T> beanSpec) {

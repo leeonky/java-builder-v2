@@ -7,9 +7,17 @@ import java.lang.reflect.Method;
 import java.util.stream.Stream;
 
 class CustomizedFactory<T> extends BeanFactory<T> {
-    public CustomizedFactory(Definition<T> definition) {
+    private final BeanFactory<T> base;
+    private final Definition<T> definition;
+
+    public CustomizedFactory(BeanFactory<T> base, Definition<T> definition) {
         super(BeanClass.create(definition.getType()));
-        define(definition::define);
+        this.base = base;
+        this.definition = definition;
+        registerMixIns(definition);
+    }
+
+    private void registerMixIns(Definition<T> definition) {
         Stream.of(definition.getClass().getMethods())
                 .filter(method -> method.getAnnotation(MixIn.class) != null)
                 .forEach(method -> canMixIn(getMixInName(method), (argument, spec) -> {
@@ -23,6 +31,18 @@ class CustomizedFactory<T> extends BeanFactory<T> {
                         throw new IllegalStateException(e);
                     }
                 }));
+    }
+
+    @Override
+    protected T newInstance(Argument argument) {
+        return base.create(argument);
+    }
+
+    @Override
+    public void collectSpec(Argument argument, BeanSpec<T> beanSpec) {
+        base.collectSpec(argument, beanSpec);
+        definition.define(argument, beanSpec);
+        super.collectSpec(argument, beanSpec);
     }
 
     private String getMixInName(Method method) {

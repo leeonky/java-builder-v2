@@ -47,8 +47,9 @@ public class FactorySet {
         return dataRepository;
     }
 
-    public FactorySet define(Class<? extends Definition<?>> definition) {
-        customizedFactoryInType.put(definition, new CustomizedFactory<>((Definition<?>) BeanClass.newInstance(definition)));
+    public <T> FactorySet define(Class<? extends Definition<T>> definition) {
+        Definition<T> definitionInstance = BeanClass.newInstance(definition);
+        customizedFactoryInType.put(definition, new CustomizedFactory<>(queryObjectFactory(definitionInstance.getType()), definitionInstance));
         return this;
     }
 
