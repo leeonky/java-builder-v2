@@ -31,7 +31,7 @@ class CustomizedBuild {
     }
 
     @Test
-    void support_define_mixin() {
+    void support_define_mix_in() {
         factorySet.factory(Bean.class).canMixIn("100", (arg, spec) -> {
             spec.property("intValue").value(100);
         });
