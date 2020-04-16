@@ -29,6 +29,14 @@ class CustomizedBuildInDefinition {
                 .hasFieldOrPropertyWithValue("intValue", 50);
     }
 
+    @Test
+    void support_define_customized_factory_and_build_through_name() {
+        factorySet.define(一个Bean.class);
+
+        assertThat(factorySet.toBuild("一个Bean").create())
+                .hasFieldOrPropertyWithValue("content", "this is a bean");
+    }
+
     @Getter
     @Setter
     public static class Bean {

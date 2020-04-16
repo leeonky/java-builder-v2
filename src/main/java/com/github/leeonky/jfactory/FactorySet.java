@@ -10,6 +10,7 @@ public class FactorySet {
     private final Map<Class<?>, Integer> sequences = new HashMap<>();
     private final Map<Class<?>, BeanFactory<?>> beanFactories = new HashMap<>();
     private final Map<Class<?>, CustomizedFactory<?>> customizedFactoryInType = new HashMap<>();
+    private final Map<String, CustomizedFactory<?>> customizedFactoryInName = new HashMap<>();
     private final DataRepository dataRepository;
 
     public FactorySet(DataRepository dataRepository) {
@@ -49,7 +50,9 @@ public class FactorySet {
 
     public <T> FactorySet define(Class<? extends Definition<T>> definition) {
         Definition<T> definitionInstance = BeanClass.newInstance(definition);
-        customizedFactoryInType.put(definition, new CustomizedFactory<>(queryObjectFactory(definitionInstance.getType()), definitionInstance));
+        CustomizedFactory<T> customizedFactory = new CustomizedFactory<>(queryObjectFactory(definitionInstance.getType()), definitionInstance);
+        customizedFactoryInType.put(definition, customizedFactory);
+        customizedFactoryInName.put(definitionInstance.getName(), customizedFactory);
         return this;
     }
 
@@ -57,5 +60,10 @@ public class FactorySet {
     public <T> Builder<T> toBuild(Class<? extends Definition<T>> definition) {
         define(definition);
         return new Builder<>(this, (BeanFactory<T>) customizedFactoryInType.get(definition));
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Builder<T> toBuild(String definition) {
+        return new Builder<>(this, (BeanFactory<T>) customizedFactoryInName.get(definition));
     }
 }
