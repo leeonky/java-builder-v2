@@ -12,8 +12,8 @@ class QueryExpression<T> {
     private final BeanClass<T> beanClass;
     private final Object value;
     private final String baseName;
-    private final String[] combinations;
-    private final String factory, condition;
+    private final String[] mixIns;
+    private final String definition, condition;
 
     public QueryExpression(BeanClass<T> beanClass, String chain, Object value) {
         this.beanClass = beanClass;
@@ -21,23 +21,23 @@ class QueryExpression<T> {
         Matcher matcher;
         if ((matcher = Pattern.compile("([^.]+)\\((.+)[, |,| ](.+)\\)\\.(.+)").matcher(chain)).matches()) {
             baseName = matcher.group(1);
-            combinations = matcher.group(2).split(", |,| ");
-            factory = matcher.group(3);
+            mixIns = matcher.group(2).split(", |,| ");
+            definition = matcher.group(3);
             condition = matcher.group(4);
         } else if ((matcher = Pattern.compile("([^.]+)\\((.+)\\)\\.(.+)").matcher(chain)).matches()) {
             baseName = matcher.group(1);
-            combinations = new String[0];
-            factory = matcher.group(2);
+            mixIns = new String[0];
+            definition = matcher.group(2);
             condition = matcher.group(3);
         } else if ((matcher = Pattern.compile("([^.]+)\\.(.+)").matcher(chain)).matches()) {
             baseName = matcher.group(1);
-            combinations = new String[0];
-            factory = null;
+            mixIns = new String[0];
+            definition = null;
             condition = matcher.group(2);
         } else if ((matcher = Pattern.compile("([^.]+)").matcher(chain)).matches()) {
             baseName = matcher.group(1);
-            combinations = new String[0];
-            factory = null;
+            mixIns = new String[0];
+            definition = null;
             condition = null;
         } else
             throw new IllegalStateException("Invalid query expression `" + chain + "`");
@@ -67,6 +67,7 @@ class QueryExpression<T> {
     }
 
     private Builder<?> toBuilder(FactorySet factorySet, Object v, Class<?> propertyType) {
-        return factorySet.type(propertyType).property(condition, v);
+        return (definition != null ? factorySet.toBuild(definition) : factorySet.type(propertyType))
+                .mixIn(mixIns).property(condition, v);
     }
 }

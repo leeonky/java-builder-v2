@@ -6,8 +6,9 @@ import lombok.Setter;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class CustomizedBuildInDefinition {
+class CustomizedBuildInClass {
     private FactorySet factorySet = new FactorySet();
 
     @Test
@@ -37,12 +38,47 @@ class CustomizedBuildInDefinition {
                 .hasFieldOrPropertyWithValue("content", "this is a bean");
     }
 
+    @Test
+    void should_raise_error_when_definition_or_mix_in_not_exist() {
+        assertThrows(IllegalArgumentException.class, () -> factorySet.toBuild("一个Bean"));
+    }
+
+    @Test
+    void support_create_nested_object_with_definition_name() {
+        factorySet.define(一个Bean.class);
+
+        assertThat(factorySet.type(Beans.class).property("bean(一个Bean).stringValue", "hello").create().getBean())
+                .hasFieldOrPropertyWithValue("stringValue", "hello");
+    }
+
+    @Test
+    void support_create_nested_object_with_definition_and_mix_id() {
+        factorySet.define(一个Bean.class);
+
+        assertThat(factorySet.type(BeansWrapper.class).property("beans.bean(int100 一个Bean).stringValue", "hello").create().getBeans().getBean())
+                .hasFieldOrPropertyWithValue("stringValue", "hello")
+                .hasFieldOrPropertyWithValue("content", "this is a bean")
+                .hasFieldOrPropertyWithValue("intValue", 100);
+    }
+
     @Getter
     @Setter
     public static class Bean {
         private String content;
         private String stringValue;
         private int intValue;
+    }
+
+    @Getter
+    @Setter
+    public static class Beans {
+        private Bean bean;
+    }
+
+    @Getter
+    @Setter
+    public static class BeansWrapper {
+        private Beans beans;
     }
 
     @Getter

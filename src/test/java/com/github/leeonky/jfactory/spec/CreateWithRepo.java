@@ -22,7 +22,7 @@ class CreateWithRepo {
 
         assertThat(builder.query()).isEqualTo(created);
 
-        factorySet.getDataRepository().clear();
+        factorySet.clearRepo();
 
         assertThat(builder.query()).isNull();
     }

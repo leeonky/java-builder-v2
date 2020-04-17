@@ -44,7 +44,7 @@ public class FactorySet {
         return queryObjectFactory(type);
     }
 
-    public DataRepository getDataRepository() {
+    DataRepository getDataRepository() {
         return dataRepository;
     }
 
@@ -64,6 +64,13 @@ public class FactorySet {
 
     @SuppressWarnings("unchecked")
     public <T> Builder<T> toBuild(String definition) {
-        return new Builder<>(this, (BeanFactory<T>) customizedFactoryInName.get(definition));
+        BeanFactory<T> beanFactory = (BeanFactory<T>) customizedFactoryInName.get(definition);
+        if (beanFactory == null)
+            throw new IllegalArgumentException("Definition `" + definition + "` not exist");
+        return new Builder<>(this, beanFactory);
+    }
+
+    public void clearRepo() {
+        getDataRepository().clear();
     }
 }
