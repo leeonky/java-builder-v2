@@ -16,7 +16,7 @@ class CreateWithRepo {
 
     @Test
     void save_in_repo_after_create() {
-        Builder<Bean> builder = factorySet.type(Bean.class).property("stringValue", "hello");
+        Builder<Bean> builder = factorySet.type(Bean.class).property("stringValue", "hello").property("intValue", 100);
 
         Bean created = builder.create();
 
