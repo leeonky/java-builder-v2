@@ -10,10 +10,10 @@ import java.util.regex.Pattern;
 
 class QueryExpression<T> {
     private final BeanClass<T> beanClass;
-    private final Object value;
     private final String baseName;
     private final String[] mixIns;
     private final String definition, condition;
+    private final Object value;
 
     public QueryExpression(BeanClass<T> beanClass, String chain, Object value) {
         this.beanClass = beanClass;
@@ -54,20 +54,20 @@ class QueryExpression<T> {
         return new QueryExpression(propertyReader.getPropertyTypeWrapper(), condition, value).matches(propertyValue);
     }
 
-    public void queryOrCreateNested(FactorySet factorySet, String k, Object v, PropertiesProducer propertiesProducer) {
+    public void queryOrCreateNested(FactorySet factorySet, PropertiesProducer propertiesProducer) {
         if (condition == null)
-            propertiesProducer.add(new ValueProducer<>(k, v));
+            propertiesProducer.add(new ValueProducer<>(baseName, value));
         else {
-            Collection<?> collection = toBuilder(factorySet, v, beanClass.getPropertyReader(baseName).getPropertyType()).queryAll();
+            Collection<?> collection = toBuilder(factorySet, beanClass.getPropertyReader(baseName).getPropertyType()).queryAll();
             if (collection.isEmpty())
-                propertiesProducer.add(toBuilder(factorySet, v, beanClass.getPropertyWriter(baseName).getPropertyType()).producer(baseName));
+                propertiesProducer.add(toBuilder(factorySet, beanClass.getPropertyWriter(baseName).getPropertyType()).producer(baseName));
             else
                 propertiesProducer.add(new ValueProducer<>(baseName, collection.iterator().next()));
         }
     }
 
-    private Builder<?> toBuilder(FactorySet factorySet, Object v, Class<?> propertyType) {
+    private Builder<?> toBuilder(FactorySet factorySet, Class<?> propertyType) {
         return (definition != null ? factorySet.toBuild(definition) : factorySet.type(propertyType))
-                .mixIn(mixIns).property(condition, v);
+                .mixIn(mixIns).property(condition, value);
     }
 }
