@@ -13,7 +13,7 @@ class CustomizedBuildInClass {
 
     @Test
     void support_define_customized_factory_with_spec_and_mix_in() {
-        assertThat(factorySet.toBuild(一个Bean.class).mixIn("int100", "hello").create())
+        assertThat(factorySet.toBuild(ABean.class).mixIn("int100", "hello").create())
                 .hasFieldOrPropertyWithValue("content", "this is a bean")
                 .hasFieldOrPropertyWithValue("stringValue", "hello")
                 .hasFieldOrPropertyWithValue("intValue", 100);
@@ -25,37 +25,37 @@ class CustomizedBuildInClass {
             spec.property("intValue").value(50);
         });
 
-        assertThat(factorySet.toBuild(一个Bean.class).create())
+        assertThat(factorySet.toBuild(ABean.class).create())
                 .isInstanceOf(BeanSub.class)
                 .hasFieldOrPropertyWithValue("intValue", 50);
     }
 
     @Test
     void support_define_customized_factory_and_build_through_name() {
-        factorySet.define(一个Bean.class);
+        factorySet.define(ABean.class);
 
-        assertThat(factorySet.toBuild("一个Bean").create())
+        assertThat(factorySet.toBuild("ABean").create())
                 .hasFieldOrPropertyWithValue("content", "this is a bean");
     }
 
     @Test
     void should_raise_error_when_definition_or_mix_in_not_exist() {
-        assertThrows(IllegalArgumentException.class, () -> factorySet.toBuild("一个Bean"));
+        assertThrows(IllegalArgumentException.class, () -> factorySet.toBuild("ABean"));
     }
 
     @Test
     void support_create_nested_object_with_definition_name() {
-        factorySet.define(一个Bean.class);
+        factorySet.define(ABean.class);
 
-        assertThat(factorySet.type(Beans.class).property("bean(一个Bean).stringValue", "hello").create().getBean())
+        assertThat(factorySet.type(Beans.class).property("bean(ABean).stringValue", "hello").create().getBean())
                 .hasFieldOrPropertyWithValue("stringValue", "hello");
     }
 
     @Test
     void support_create_nested_object_with_definition_and_mix_id() {
-        factorySet.define(一个Bean.class);
+        factorySet.define(ABean.class);
 
-        assertThat(factorySet.type(BeansWrapper.class).property("beans.bean(int100 一个Bean).stringValue", "hello").create().getBeans().getBean())
+        assertThat(factorySet.type(BeansWrapper.class).property("beans.bean(int100 ABean).stringValue", "hello").create().getBeans().getBean())
                 .hasFieldOrPropertyWithValue("stringValue", "hello")
                 .hasFieldOrPropertyWithValue("content", "this is a bean")
                 .hasFieldOrPropertyWithValue("intValue", 100);
@@ -86,7 +86,7 @@ class CustomizedBuildInClass {
     public static class BeanSub extends Bean {
     }
 
-    public static class 一个Bean extends Definition<Bean> {
+    public static class ABean extends Definition<Bean> {
 
         @Override
         public void define(Argument arg, Spec<Bean> spec) {

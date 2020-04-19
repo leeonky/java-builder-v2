@@ -14,8 +14,8 @@ class FactoryProducer<T> extends Producer<T> {
         this.beanFactory = beanFactory;
         this.argument = argument;
         propertiesProducer = new PropertiesProducer(beanFactory, factorySet, argument, mixIns);
-        properties.forEach((k, v) ->
-                new QueryExpression<>(beanFactory.getType(), k, v).queryOrCreateNested(factorySet, propertiesProducer));
+        QueryExpression.createQueryExpressions(beanFactory.getType(), properties)
+                .forEach(exp -> exp.queryOrCreateNested(factorySet, propertiesProducer));
     }
 
     public FactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument) {

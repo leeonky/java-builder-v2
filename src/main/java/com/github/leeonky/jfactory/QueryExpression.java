@@ -3,62 +3,58 @@ package com.github.leeonky.jfactory;
 import com.github.leeonky.util.BeanClass;
 import com.github.leeonky.util.PropertyReader;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 class QueryExpression<T> {
     private final BeanClass<T> beanClass;
     private final String property;
-    private final String[] mixIns;
-    private final String definition;
-    @Deprecated
-    private final String condition;
-    @Deprecated
-    private final Object value;
     private final Object baseValue;
     private final Map<String, Object> conditionValues = new LinkedHashMap<>();
+    private String[] mixIns = new String[0];
+    private String definition;
 
     public QueryExpression(BeanClass<T> beanClass, String chain, Object value) {
         this.beanClass = beanClass;
-        this.value = value;
         Matcher matcher;
         if ((matcher = Pattern.compile("([^.]+)\\((.+)[, |,| ](.+)\\)\\.(.+)").matcher(chain)).matches()) {
             property = matcher.group(1);
             mixIns = matcher.group(2).split(", |,| ");
             definition = matcher.group(3);
-            condition = matcher.group(4);
-            conditionValues.put(condition, value);
+            conditionValues.put(matcher.group(4), value);
             baseValue = null;
         } else if ((matcher = Pattern.compile("([^.]+)\\((.+)\\)\\.(.+)").matcher(chain)).matches()) {
             property = matcher.group(1);
-            mixIns = new String[0];
             definition = matcher.group(2);
-            condition = matcher.group(3);
-            conditionValues.put(condition, value);
+            conditionValues.put(matcher.group(3), value);
             baseValue = null;
         } else if ((matcher = Pattern.compile("([^.]+)\\.(.+)").matcher(chain)).matches()) {
             property = matcher.group(1);
-            mixIns = new String[0];
-            definition = null;
-            condition = matcher.group(2);
-            conditionValues.put(condition, value);
+            conditionValues.put(matcher.group(2), value);
             baseValue = null;
         } else if ((matcher = Pattern.compile("([^.]+)").matcher(chain)).matches()) {
             property = matcher.group(1);
-            mixIns = new String[0];
-            definition = null;
-            condition = null;
             baseValue = value;
         } else
             throw new IllegalStateException("Invalid query expression `" + chain + "`");
     }
 
-    public String getProperty() {
-        return property;
+    public static <T> List<QueryExpression<T>> createQueryExpressions(BeanClass<T> beanClass, Map<String, Object> criteria) {
+        return criteria.entrySet().stream()
+                .map(e -> new QueryExpression<>(beanClass, e.getKey(), e.getValue()))
+                .collect(Collectors.groupingBy(expression -> expression.property)).values().stream()
+                .map(QueryExpression::mergeToSingle)
+                .collect(Collectors.toList());
+    }
+
+    private static <T> QueryExpression<T> mergeToSingle(List<QueryExpression<T>> expressions) {
+        for (int i = 1; i < expressions.size(); i++)
+            expressions.get(0).merge(expressions.get(i));
+        return expressions.get(0);
     }
 
     @SuppressWarnings("unchecked")
@@ -69,12 +65,14 @@ class QueryExpression<T> {
         Object propertyValue = propertyReader.getValue(object);
         if (conditionValues.isEmpty())
             return Objects.equals(propertyValue, propertyReader.tryConvert(baseValue));
-        return conditionValues.entrySet().stream().allMatch(e -> new QueryExpression(propertyReader.getPropertyTypeWrapper(), e.getKey(), e.getValue()).matches(propertyValue));
+        return conditionValues.entrySet().stream()
+                .map(conditionValue -> new QueryExpression(propertyReader.getPropertyTypeWrapper(), conditionValue.getKey(), conditionValue.getValue()))
+                .allMatch(queryExpression -> queryExpression.matches(propertyValue));
     }
 
     public void queryOrCreateNested(FactorySet factorySet, PropertiesProducer propertiesProducer) {
-        if (condition == null)
-            propertiesProducer.add(new ValueProducer<>(property, value));
+        if (conditionValues.isEmpty())
+            propertiesProducer.add(new ValueProducer<>(property, baseValue));
         else {
             Collection<?> collection = toBuilder(factorySet, beanClass.getPropertyReader(property).getPropertyType()).queryAll();
             if (collection.isEmpty())
@@ -86,11 +84,30 @@ class QueryExpression<T> {
 
     private Builder<?> toBuilder(FactorySet factorySet, Class<?> propertyType) {
         return (definition != null ? factorySet.toBuild(definition) : factorySet.type(propertyType))
-                .mixIn(mixIns).property(condition, value);
+                .mixIn(mixIns).properties(conditionValues);
     }
 
-    public QueryExpression<T> merge(QueryExpression<T> another) {
+    private void merge(QueryExpression<T> another) {
+        mergeDefinition(another);
+        mergeMixIn(another);
         conditionValues.putAll(another.conditionValues);
-        return this;
+    }
+
+    private void mergeMixIn(QueryExpression<T> another) {
+        if (mixIns.length != 0 && another.mixIns.length != 0
+                && !new HashSet<>(asList(mixIns)).equals(new HashSet<>(asList(another.mixIns))))
+            throw new IllegalArgumentException(String.format("Cannot merge different mix-in %s and %s for %s.%s",
+                    Arrays.toString(mixIns), Arrays.toString(another.mixIns), beanClass.getName(), property));
+        if (mixIns.length == 0)
+            mixIns = another.mixIns;
+    }
+
+    private void mergeDefinition(QueryExpression<T> another) {
+        if (definition != null && another.definition != null
+                && !Objects.equals(definition, another.definition))
+            throw new IllegalArgumentException(String.format("Cannot merge different definition `%s` and `%s` for %s.%s",
+                    definition, another.definition, beanClass.getName(), property));
+        if (definition == null)
+            definition = another.definition;
     }
 }
