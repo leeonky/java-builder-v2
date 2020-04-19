@@ -11,7 +11,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class JavaLangType {
+class _01_JavaLangType {
     private FactorySet factorySet = new FactorySet();
 
     @Test

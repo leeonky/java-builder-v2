@@ -11,7 +11,7 @@ import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CreateWithRepo {
+class _03_CreateWithRepo {
     private FactorySet factorySet = new FactorySet();
 
     @Test

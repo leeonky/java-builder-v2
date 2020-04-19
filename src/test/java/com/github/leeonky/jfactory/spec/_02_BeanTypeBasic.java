@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class BeanTypeBasic {
+class _02_BeanTypeBasic {
     private FactorySet factorySet = new FactorySet();
 
     @Test
