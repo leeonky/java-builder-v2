@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -62,7 +63,7 @@ class QueryExpression<T> {
         if (object == null)
             return false;
         PropertyReader propertyReader = beanClass.getPropertyReader(property);
-        return conditionValue.matches(propertyReader, propertyReader.getValue(object));
+        return conditionValue.matches(propertyReader.getElementOrPropertyType(), propertyReader.getValue(object));
     }
 
     public void queryOrCreateNested(FactorySet factorySet, BeanProducers beanProducers) {
@@ -70,7 +71,7 @@ class QueryExpression<T> {
     }
 
     private abstract class ConditionValue {
-        public abstract boolean matches(PropertyReader propertyReader, Object propertyValue);
+        public abstract boolean matches(Class<?> type, Object propertyValue);
 
         public abstract Producer<?> buildProducer(FactorySet factorySet);
 
@@ -97,8 +98,8 @@ class QueryExpression<T> {
         }
 
         @Override
-        public boolean matches(PropertyReader propertyReader, Object propertyValue) {
-            return Objects.equals(propertyValue, propertyReader.tryConvert(value));
+        public boolean matches(Class<?> type, Object propertyValue) {
+            return Objects.equals(propertyValue, beanClass.getConverter().tryConvert(type, value));
         }
 
         @Override
@@ -130,9 +131,9 @@ class QueryExpression<T> {
 
         @Override
         @SuppressWarnings("unchecked")
-        public boolean matches(PropertyReader propertyReader, Object propertyValue) {
+        public boolean matches(Class<?> type, Object propertyValue) {
             return conditionValues.entrySet().stream()
-                    .map(conditionValue -> new QueryExpression(propertyReader.getPropertyTypeWrapper(), conditionValue.getKey(), conditionValue.getValue()))
+                    .map(conditionValue -> new QueryExpression(BeanClass.create(type), conditionValue.getKey(), conditionValue.getValue()))
                     .allMatch(queryExpression -> queryExpression.matches(propertyValue));
         }
 
@@ -192,7 +193,13 @@ class QueryExpression<T> {
         }
 
         @Override
-        public boolean matches(PropertyReader propertyReader, Object propertyValue) {
+        public boolean matches(Class<?> type, Object propertyValue) {
+            Optional<Stream<Object>> stream = BeanClass.getElements(propertyValue);
+            if (stream.isPresent()) {
+                List<Object> elements = stream.get().collect(Collectors.toList());
+                return conditionValueIndexMap.entrySet().stream()
+                        .allMatch(e -> e.getValue().matches(type, elements.get(e.getKey())));
+            }
             return false;
         }
 

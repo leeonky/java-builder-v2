@@ -124,14 +124,14 @@ class _06_ComplexInputProperty {
                     .hasFieldOrPropertyWithValue("intValue", 100)
             ;
 
-//            assertThat(factorySet.type(BeansWrapper.class)
-//                    .property("beans.bean.stringValue", "hello")
-//                    .property("beans.bean(ABean).intValue", 100)
-//                    .create().getBeans().getBean())
-//                    .hasFieldOrPropertyWithValue("content", "this is a bean")
-//                    .hasFieldOrPropertyWithValue("stringValue", "hello")
-//                    .hasFieldOrPropertyWithValue("intValue", 100)
-//            ;
+            assertThat(factorySet.type(BeansWrapper.class)
+                    .property("beans.bean.stringValue", "hello")
+                    .property("beans.bean(ABean).intValue", 100)
+                    .create().getBeans().getBean())
+                    .hasFieldOrPropertyWithValue("content", "this is a bean")
+                    .hasFieldOrPropertyWithValue("stringValue", "hello")
+                    .hasFieldOrPropertyWithValue("intValue", 100)
+            ;
         }
 
         @Test
@@ -195,7 +195,23 @@ class _06_ComplexInputProperty {
 
             @Test
             void support_element_in_query() {
+                Builder<BeanCollection> builder1 = factorySet.type(BeanCollection.class)
+                        .property("list[0].stringValue", "hello")
+                        .property("list[0].intValue", 100)
+                        .property("list[1].stringValue", "world")
+                        .property("list[1].intValue", 200);
 
+                Builder<BeanCollection> builder2 = factorySet.type(BeanCollection.class)
+                        .property("list[0].stringValue", "goodbye")
+                        .property("list[0].intValue", 300)
+                        .property("list[1].stringValue", "world")
+                        .property("list[1].intValue", 400);
+
+                BeanCollection beanCollection1 = builder1.create();
+                BeanCollection beanCollection2 = builder2.create();
+
+                assertThat(builder1.queryAll()).containsOnly(beanCollection1);
+                assertThat(builder2.queryAll()).containsOnly(beanCollection2);
             }
         }
     }
