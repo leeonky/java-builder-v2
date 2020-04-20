@@ -213,6 +213,98 @@ class _06_ComplexInputProperty {
                 assertThat(builder1.queryAll()).containsOnly(beanCollection1);
                 assertThat(builder2.queryAll()).containsOnly(beanCollection2);
             }
+
+            @Test
+            void also_support_definition_and_mix_in_in_element() {
+                factorySet.define(ABean.class);
+
+                BeanCollection beanCollection = factorySet.type(BeanCollection.class)
+                        .property("list[0](int100 ABean).stringValue", "hello")
+                        .create();
+
+                assertThat(beanCollection.getList().get(0))
+                        .hasFieldOrPropertyWithValue("content", "this is a bean")
+                        .hasFieldOrPropertyWithValue("stringValue", "hello")
+                        .hasFieldOrPropertyWithValue("intValue", 100)
+                ;
+
+                assertThat(factorySet.type(BeanCollection.class)
+                        .property("list[0](int100 ABean).stringValue", "hello").queryAll())
+                        .containsOnly(beanCollection);
+            }
+
+            @Test
+            void support_different_type_in_each_element() {
+                Bean bean = new Bean();
+                Builder<BeanCollection> builder = factorySet.type(BeanCollection.class)
+                        .property("list[0].stringValue", "hello")
+                        .property("list[1]", bean);
+
+                BeanCollection beanCollection = builder.create();
+
+                assertThat(beanCollection.getList().get(0))
+                        .hasFieldOrPropertyWithValue("stringValue", "hello")
+                ;
+
+                assertThat(beanCollection.getList().get(1))
+                        .isEqualTo(bean)
+                ;
+
+                assertThat(builder.queryAll()).containsOnly(beanCollection);
+            }
+        }
+    }
+
+    @Nested
+    class IntentlyCreate {
+
+        @Test
+        void create_query_intently() {
+            factorySet.type(Bean.class)
+                    .property("stringValue", "hello")
+                    .create();
+
+            assertThat(factorySet.type(Bean.class)
+                    .property("stringValue!", "hello")
+                    .queryAll()).isEmpty();
+        }
+
+        @Test
+        void create_nested_object_intently() {
+            Bean bean = factorySet.type(Bean.class)
+                    .property("stringValue", "hello")
+                    .property("intValue", 100)
+                    .create();
+
+            assertThat(factorySet.type(Beans.class)
+                    .property("bean!.stringValue", "hello")
+                    .create().getBean()).isNotEqualTo(bean);
+
+            assertThat(factorySet.type(BeanCollection.class)
+                    .property("list[0]!.stringValue", "hello")
+                    .property("list[0].intValue", 100).create().getList().get(0)).isNotEqualTo(bean);
+
+            assertThat(factorySet.type(BeanCollection.class)
+                    .property("list[0].stringValue", "hello")
+                    .property("list[0]!.intValue", 100).create().getList().get(0)).isNotEqualTo(bean);
+        }
+
+        @Test
+        void support_create_object_only_with_definition_and_mix_in_and_ignore_value() {
+            factorySet.define(ABean.class);
+
+            assertThat(factorySet.type(Beans.class)
+                    .property("bean(int100 ABean)!", "")
+                    .create().getBean())
+                    .hasFieldOrPropertyWithValue("content", "this is a bean")
+                    .hasFieldOrPropertyWithValue("intValue", 100)
+            ;
+
+            assertThat(factorySet.type(Beans.class)
+                    .property("bean(ABean)!", "")
+                    .create().getBean())
+                    .hasFieldOrPropertyWithValue("content", "this is a bean")
+            ;
         }
     }
 }

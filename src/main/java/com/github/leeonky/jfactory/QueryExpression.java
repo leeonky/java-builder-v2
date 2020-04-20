@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -18,22 +17,30 @@ class QueryExpression<T> {
 
     public QueryExpression(BeanClass<T> beanClass, String chain, Object value) {
         this.beanClass = beanClass;
-        Matcher matcher;
-        if ((matcher = Pattern.compile("([^.]+)\\((.+)[, |,| ](.+)\\)\\.(.+)").matcher(chain)).matches()) {
-            property = matcher.group(1);
-            conditionValue = new ConditionValueSet(matcher.group(4), value, matcher.group(3), matcher.group(2).split(", |,| "));
-        } else if ((matcher = Pattern.compile("([^.]+)\\((.+)\\)\\.(.+)").matcher(chain)).matches()) {
-            property = matcher.group(1);
-            conditionValue = new ConditionValueSet(matcher.group(3), value, matcher.group(2), new String[0]);
-        } else if ((matcher = Pattern.compile("([^.]+)\\.(.+)").matcher(chain)).matches()) {
-            property = matcher.group(1);
-            conditionValue = new ConditionValueSet(matcher.group(2), value, null, new String[0]);
-        } else if ((matcher = Pattern.compile("([^.]+)").matcher(chain)).matches()) {
-            property = matcher.group(1);
-            conditionValue = new SingleValue(value);
-        } else
-            throw new IllegalStateException("Invalid query expression `" + chain + "`");
+        String[] propertyAndCondition = chain.split("\\.", 2);
+        boolean intently = propertyAndCondition[0].endsWith("!");
+        propertyAndCondition[0] = propertyAndCondition[0].replace("!", "");
+        String[] propertyAndDefinitionMixIns = propertyAndCondition[0].split("[()]");
+        property = propertyAndDefinitionMixIns[0];
 
+        String[] mixIn;
+        String definition;
+        if (propertyAndDefinitionMixIns.length > 1) {
+            String[] mixInAndDefinition = propertyAndDefinitionMixIns[1].split(", |,| ");
+            mixIn = Arrays.copyOf(mixInAndDefinition, mixInAndDefinition.length - 1);
+            definition = mixInAndDefinition[mixInAndDefinition.length - 1];
+        } else {
+            mixIn = new String[0];
+            definition = null;
+        }
+
+        conditionValue = propertyAndCondition.length > 1 ?
+                new ConditionValueSet(propertyAndCondition[1], value, definition, mixIn)
+                : new SingleValue(value, mixIn, definition);
+
+        conditionValue.setIntently(intently);
+
+        Matcher matcher;
         if ((matcher = Pattern.compile("(.*)\\[(.*)]").matcher(property)).matches()) {
             property = matcher.group(1);
             conditionValue = new CollectionConditionValue(Integer.valueOf(matcher.group(2)), conditionValue);
@@ -71,6 +78,8 @@ class QueryExpression<T> {
     }
 
     private abstract class ConditionValue {
+        private boolean intently = false;
+
         public abstract boolean matches(Class<?> type, Object propertyValue);
 
         public abstract Producer<?> buildProducer(FactorySet factorySet);
@@ -88,22 +97,40 @@ class QueryExpression<T> {
         protected ConditionValue mergeTo(CollectionConditionValue collectionConditionValue) {
             throw new IllegalArgumentException(String.format("Cannot merge different structure %s.%s", beanClass.getName(), property));
         }
+
+        public boolean isIntently() {
+            return intently;
+        }
+
+        public void setIntently(boolean intently) {
+            this.intently = intently;
+        }
     }
 
     private class SingleValue extends ConditionValue {
         private final Object value;
+        private final String[] mixIns;
+        private final String definition;
 
         public SingleValue(Object value) {
+            this(value, new String[0], null);
+        }
+
+        public SingleValue(Object value, String[] mixIns, String definition) {
             this.value = value;
+            this.mixIns = mixIns;
+            this.definition = definition;
         }
 
         @Override
         public boolean matches(Class<?> type, Object propertyValue) {
-            return Objects.equals(propertyValue, beanClass.getConverter().tryConvert(type, value));
+            return !isIntently() && Objects.equals(propertyValue, beanClass.getConverter().tryConvert(type, value));
         }
 
         @Override
         public Producer<?> buildProducer(FactorySet factorySet) {
+            if (isIntently())
+                return toBuilder(factorySet, beanClass.getPropertyWriter(property).getElementOrPropertyType()).producer(property);
             return new ValueProducer<>(property, value);
         }
 
@@ -115,6 +142,11 @@ class QueryExpression<T> {
         @Override
         protected ConditionValue mergeTo(SingleValue singleValue) {
             return this;
+        }
+
+        private Builder<?> toBuilder(FactorySet factorySet, Class<?> propertyType) {
+            return (definition != null ? factorySet.toBuild(definition) : factorySet.type(propertyType))
+                    .mixIn(mixIns);
         }
     }
 
@@ -139,6 +171,8 @@ class QueryExpression<T> {
 
         @Override
         public Producer<?> buildProducer(FactorySet factorySet) {
+            if (isIntently())
+                return toBuilder(factorySet, beanClass.getPropertyWriter(property).getElementOrPropertyType()).producer(property);
             Collection<?> collection = toBuilder(factorySet, beanClass.getPropertyReader(property).getElementOrPropertyType()).queryAll();
             if (collection.isEmpty())
                 return toBuilder(factorySet, beanClass.getPropertyWriter(property).getElementOrPropertyType()).producer(property);
@@ -147,7 +181,8 @@ class QueryExpression<T> {
         }
 
         private Builder<?> toBuilder(FactorySet factorySet, Class<?> propertyType) {
-            return (definition != null ? factorySet.toBuild(definition) : factorySet.type(propertyType)).mixIn(mixIns).properties(conditionValues);
+            return (definition != null ? factorySet.toBuild(definition) : factorySet.type(propertyType))
+                    .mixIn(mixIns).properties(conditionValues);
         }
 
         @Override
@@ -163,6 +198,7 @@ class QueryExpression<T> {
             conditionValues.putAll(conditionValueSet.conditionValues);
             mergeMixIn(conditionValueSet);
             mergeDefinition(conditionValueSet);
+            setIntently(isIntently() || conditionValueSet.isIntently());
             return this;
         }
 
@@ -194,13 +230,10 @@ class QueryExpression<T> {
 
         @Override
         public boolean matches(Class<?> type, Object propertyValue) {
-            Optional<Stream<Object>> stream = BeanClass.getElements(propertyValue);
-            if (stream.isPresent()) {
-                List<Object> elements = stream.get().collect(Collectors.toList());
-                return conditionValueIndexMap.entrySet().stream()
-                        .allMatch(e -> e.getValue().matches(type, elements.get(e.getKey())));
-            }
-            return false;
+            List<Object> elements = BeanClass.getElements(propertyValue).orElseThrow(IllegalStateException::new)
+                    .collect(Collectors.toList());
+            return conditionValueIndexMap.entrySet().stream()
+                    .allMatch(e -> e.getValue().matches(type, elements.get(e.getKey())));
         }
 
         @Override
@@ -218,13 +251,8 @@ class QueryExpression<T> {
 
         @Override
         protected ConditionValue mergeTo(CollectionConditionValue collectionConditionValue) {
-            collectionConditionValue.conditionValueIndexMap.forEach((k, v) -> {
-                ConditionValue conditionValue = conditionValueIndexMap.get(k);
-                if (conditionValue != null)
-                    conditionValueIndexMap.put(k, conditionValue.merge(v));
-                else
-                    conditionValueIndexMap.put(k, v);
-            });
+            collectionConditionValue.conditionValueIndexMap.forEach((k, v) ->
+                    conditionValueIndexMap.put(k, conditionValueIndexMap.containsKey(k) ? conditionValueIndexMap.get(k).merge(v) : v));
             return this;
         }
     }
