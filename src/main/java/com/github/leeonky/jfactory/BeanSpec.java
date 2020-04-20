@@ -1,10 +1,10 @@
 package com.github.leeonky.jfactory;
 
 class BeanSpec<T> implements Spec<T> {
-    private final PropertiesProducer propertiesProducer;
+    private final BeanProducers beanProducers;
 
-    public BeanSpec(PropertiesProducer propertiesProducer) {
-        this.propertiesProducer = propertiesProducer;
+    public BeanSpec(BeanProducers beanProducers) {
+        this.beanProducers = beanProducers;
     }
 
     @Override
@@ -20,7 +20,7 @@ class BeanSpec<T> implements Spec<T> {
         }
 
         public void value(Object value) {
-            propertiesProducer.add(new ValueProducer<>(property, value));
+            beanProducers.add(new ValueProducer<>(property, value));
         }
     }
 }

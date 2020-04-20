@@ -176,21 +176,26 @@ class _06_ComplexInputProperty {
             void support_element_in_build() {
                 BeanCollection beanCollection = factorySet.type(BeanCollection.class)
                         .property("list[0].stringValue", "hello")
-//                        .property("list[0].intValue", 100)
-//                        .property("list[1].stringValue", "world")
-//                        .property("list[1].intValue", 200)
+                        .property("list[0].intValue", 100)
+                        .property("list[1].stringValue", "world")
+                        .property("list[1].intValue", 200)
                         .create();
 
-//                assertThat(beanCollection.getList().size()).isEqualTo(2);
+                assertThat(beanCollection.getList().size()).isEqualTo(2);
 
                 assertThat(beanCollection.getList().get(0))
                         .hasFieldOrPropertyWithValue("stringValue", "hello")
-//                        .hasFieldOrPropertyWithValue("intValue", 100)
+                        .hasFieldOrPropertyWithValue("intValue", 100)
                 ;
-//                assertThat(beanCollection.getList().get(1))
-//                        .hasFieldOrPropertyWithValue("stringValue", "world")
-//                        .hasFieldOrPropertyWithValue("intValue", 200)
-//                ;
+                assertThat(beanCollection.getList().get(1))
+                        .hasFieldOrPropertyWithValue("stringValue", "world")
+                        .hasFieldOrPropertyWithValue("intValue", 200)
+                ;
+            }
+
+            @Test
+            void support_element_in_query() {
+
             }
         }
     }

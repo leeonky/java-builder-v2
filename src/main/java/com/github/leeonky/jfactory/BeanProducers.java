@@ -6,11 +6,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-class PropertiesProducer {
+class BeanProducers {
     private final Map<String, Producer<?>> propertyProducers = new LinkedHashMap<>();
     private final BeanClass type;
 
-    public <T> PropertiesProducer(BeanFactory<T> beanFactory, FactorySet factorySet, Argument argument, List<String> mixIns) {
+    public <T> BeanProducers(BeanFactory<T> beanFactory, FactorySet factorySet, Argument argument, List<String> mixIns) {
         type = beanFactory.getType();
         beanFactory.getPropertyWriters()
                 .forEach((name, propertyWriter) ->

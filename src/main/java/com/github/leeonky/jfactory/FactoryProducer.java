@@ -7,15 +7,15 @@ import java.util.Map;
 class FactoryProducer<T> extends Producer<T> {
     private final BeanFactory<T> beanFactory;
     private final Argument argument;
-    private final PropertiesProducer propertiesProducer;
+    private final BeanProducers beanProducers;
 
     public FactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument, Map<String, Object> properties, List<String> mixIns) {
         super(argument.getProperty());
         this.beanFactory = beanFactory;
         this.argument = argument;
-        propertiesProducer = new PropertiesProducer(beanFactory, factorySet, argument, mixIns);
+        beanProducers = new BeanProducers(beanFactory, factorySet, argument, mixIns);
         QueryExpression.createQueryExpressions(beanFactory.getType(), properties)
-                .forEach(exp -> exp.queryOrCreateNested(factorySet, propertiesProducer));
+                .forEach(exp -> exp.queryOrCreateNested(factorySet, beanProducers));
     }
 
     public FactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument) {
@@ -25,7 +25,7 @@ class FactoryProducer<T> extends Producer<T> {
     @Override
     public T produce() {
         T data = beanFactory.create(argument);
-        propertiesProducer.produce(data);
+        beanProducers.produce(data);
         return data;
     }
 }
