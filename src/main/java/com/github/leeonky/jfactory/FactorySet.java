@@ -50,7 +50,7 @@ public class FactorySet {
 
     public <T> FactorySet define(Class<? extends Definition<T>> definition) {
         Definition<T> definitionInstance = BeanClass.newInstance(definition);
-        CustomizedFactory<T> customizedFactory = new CustomizedFactory<>(queryObjectFactory(definitionInstance.getType()), definitionInstance);
+        CustomizedFactory<T> customizedFactory = new CustomizedFactory<>(queryObjectFactory(definitionInstance.getType()), definition);
         customizedFactoryInType.put(definition, customizedFactory);
         customizedFactoryInName.put(definitionInstance.getName(), customizedFactory);
         return this;

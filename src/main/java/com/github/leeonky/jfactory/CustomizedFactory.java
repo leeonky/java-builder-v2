@@ -8,21 +8,21 @@ import java.util.stream.Stream;
 
 class CustomizedFactory<T> extends BeanFactory<T> {
     private final BeanFactory<T> base;
-    private final Definition<T> definition;
+    private final Class<? extends Definition<T>> definition;
 
-    public CustomizedFactory(BeanFactory<T> base, Definition<T> definition) {
-        super(BeanClass.create(definition.getType()));
+    public CustomizedFactory(BeanFactory<T> base, Class<? extends Definition<T>> definition) {
+        super(base.getType());
         this.base = base;
         this.definition = definition;
-        registerMixIns(definition);
+        registerMixIns();
     }
 
-    private void registerMixIns(Definition<T> definition) {
-        Stream.of(definition.getClass().getMethods())
+    private void registerMixIns() {
+        Stream.of(definition.getMethods())
                 .filter(method -> method.getAnnotation(MixIn.class) != null)
-                .forEach(method -> canMixIn(getMixInName(method), (argument, spec) -> {
+                .forEach(method -> canMixIn(getMixInName(method), (arg, spec) -> {
                     try {
-                        method.invoke(definition, argument, spec);
+                        method.invoke(BeanClass.newInstance(definition).setContext(arg, spec));
                     } catch (IllegalAccessException e) {
                         throw new IllegalStateException(e);
                     } catch (InvocationTargetException e) {
@@ -39,10 +39,10 @@ class CustomizedFactory<T> extends BeanFactory<T> {
     }
 
     @Override
-    public void collectSpec(Argument argument, BeanSpec<T> beanSpec) {
-        base.collectSpec(argument, beanSpec);
-        definition.define(argument, beanSpec);
-        super.collectSpec(argument, beanSpec);
+    public void collectSpec(Argument arg, BeanSpec<T> spec) {
+        base.collectSpec(arg, spec);
+        BeanClass.newInstance(definition).setContext(arg, spec).define();
+        super.collectSpec(arg, spec);
     }
 
     private String getMixInName(Method method) {

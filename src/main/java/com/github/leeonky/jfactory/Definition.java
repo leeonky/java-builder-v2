@@ -3,7 +3,24 @@ package com.github.leeonky.jfactory;
 import com.github.leeonky.util.GenericType;
 
 public abstract class Definition<T> {
-    public void define(Argument arg, Spec<T> spec) {
+    private Spec<T> spec;
+    private Argument argument;
+
+    public Spec<T> spec() {
+        return spec;
+    }
+
+    public Argument argument() {
+        return argument;
+    }
+
+    public Definition<T> setContext(Argument argument, Spec<T> spec) {
+        this.argument = argument;
+        this.spec = spec;
+        return this;
+    }
+
+    public void define() {
     }
 
     @SuppressWarnings("unchecked")

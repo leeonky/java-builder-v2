@@ -1,6 +1,9 @@
 package com.github.leeonky.jfactory.spec;
 
-import com.github.leeonky.jfactory.*;
+import com.github.leeonky.jfactory.Builder;
+import com.github.leeonky.jfactory.Definition;
+import com.github.leeonky.jfactory.FactorySet;
+import com.github.leeonky.jfactory.MixIn;
 import lombok.Getter;
 import lombok.Setter;
 import org.junit.jupiter.api.Nested;
@@ -46,18 +49,18 @@ class _06_ComplexInputProperty {
     public static class ABean extends Definition<Bean> {
 
         @Override
-        public void define(Argument arg, Spec<Bean> spec) {
-            spec.property("content").value("this is a bean");
+        public void define() {
+            spec().property("content").value("this is a bean");
         }
 
         @MixIn
-        public void int100(Argument arg, Spec<Bean> spec) {
-            spec.property("intValue").value(100);
+        public void int100() {
+            spec().property("intValue").value(100);
         }
 
         @MixIn("hello")
-        public void strHello(Argument arg, Spec<Bean> spec) {
-            spec.property("stringValue").value("hello");
+        public void strHello() {
+            spec().property("stringValue").value("hello");
         }
     }
 
