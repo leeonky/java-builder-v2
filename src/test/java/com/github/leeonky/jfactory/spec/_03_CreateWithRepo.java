@@ -28,6 +28,13 @@ class _03_CreateWithRepo {
     }
 
     @Test
+    void save_nested_in_repo_after_create() {
+        Bean bean = factorySet.type(Beans.class).property("bean.stringValue", "hello").create().getBean();
+
+        assertThat(factorySet.type(Bean.class).property("stringValue", "hello").query()).isEqualTo(bean);
+    }
+
+    @Test
     void support_queried_object_with_nested_specified_property() {
         Bean helloBean = factorySet.type(Bean.class).property("stringValue", "hello").create();
 
