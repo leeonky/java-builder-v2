@@ -34,6 +34,12 @@ class _06_ComplexInputProperty {
 
     @Getter
     @Setter
+    public static class BeansPair {
+        private Beans beans1, beans2;
+    }
+
+    @Getter
+    @Setter
     public static class BeanCollection {
         private Bean[] array;
         private List<Bean> list;
@@ -308,6 +314,20 @@ class _06_ComplexInputProperty {
                     .create().getBean())
                     .hasFieldOrPropertyWithValue("content", "this is a bean")
             ;
+        }
+    }
+
+    @Nested
+    class UniqCreation {
+
+        @Test
+        void uniq_build_in_nested_duplicated_object_creation() {
+            factorySet.type(BeansPair.class)
+                    .property("beans1.bean.stringValue", "hello")
+                    .property("beans2.bean.stringValue", "hello")
+                    .create();
+
+            assertThat(factorySet.type(Bean.class).queryAll()).hasSize(1);
         }
     }
 }

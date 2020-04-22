@@ -17,13 +17,13 @@ public class Builder<T> {
     }
 
     public T create() {
-        T object = producer(null).produce();
+        T object = producer(null).processSpec().produce();
         factorySet.getDataRepository().save(object);
         return object;
     }
 
-    FactoryProducer<T> producer(String property) {
-        return new FactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params), properties, mixIns);
+    BeanFactoryProducer<T> producer(String property) {
+        return new BeanFactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params), properties, mixIns);
     }
 
     public T query() {
