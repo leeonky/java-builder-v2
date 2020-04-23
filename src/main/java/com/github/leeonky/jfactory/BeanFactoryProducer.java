@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class BeanFactoryProducer<T> extends Producer<T> {
@@ -13,11 +14,8 @@ class BeanFactoryProducer<T> extends Producer<T> {
     private final Map<String, Object> properties;
     private final List<String> mixIns;
     private final BeanProducers beanProducers;
-    private T value;
-    private boolean produced = false;
 
     public BeanFactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument, Map<String, Object> properties, List<String> mixIns) {
-        super(argument.getProperty());
         this.factorySet = factorySet;
         this.beanFactory = beanFactory;
         this.argument = argument;
@@ -30,27 +28,24 @@ class BeanFactoryProducer<T> extends Producer<T> {
 
     @Override
     public T produce() {
-        if (!produced) {
-            produced = true;
-            value = beanFactory.create(argument);
-            beanProducers.produce(value);
-            factorySet.getDataRepository().save(value);
-        }
+        T value = beanFactory.create(argument);
+        beanProducers.produce(value);
+        factorySet.getDataRepository().save(value);
         return value;
     }
 
+    @SuppressWarnings("unchecked")
     public BeanFactoryProducer<T> processSpec() {
         getChildren().stream()
-                .filter(producerRef -> producerRef.getProducer() instanceof BeanFactoryProducer)
-                .collect(Collectors.groupingBy(ProducerRef::getProducer))
-                .values()
-                .forEach(refs -> refs.stream().reduce((r1, r2) -> r1.link((ProducerRef) r2)));
+                .filter(ProducerRef::isBeanFactoryProducer)
+                .collect(Collectors.groupingBy(Function.identity()))
+                .forEach((_ignore, refs) -> refs.stream().reduce((r1, r2) -> r1.link((ProducerRef) r2)));
         return this;
     }
 
     @Override
     protected Collection<ProducerRef<?>> getChildren() {
-        return collectChildren(beanProducers.getProducers());
+        return beanProducers.getProducers();
     }
 
     @Override

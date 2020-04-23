@@ -7,6 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.github.leeonky.jfactory.Producer.collectChildren;
+
 class BeanProducers {
     private final Map<String, ProducerRef<?>> propertyProducerRefs = new LinkedHashMap<>();
     private final BeanClass type;
@@ -16,24 +18,24 @@ class BeanProducers {
         beanFactory.getPropertyWriters()
                 .forEach((name, propertyWriter) ->
                         ValueFactories.of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
-                                add(new ValueFactoryProducer<>(fieldFactory, argument.newProperty(name)))));
+                                add(name, new ValueFactoryProducer<>(fieldFactory, argument.newProperty(name)))));
         BeanSpec<T> beanSpec = new BeanSpec<>(this);
         beanFactory.collectSpec(argument, beanSpec);
         beanFactory.collectMixInSpecs(argument, mixIns, beanSpec);
     }
 
     @SuppressWarnings("unchecked")
-    public void add(Producer<?> producer) {
-        propertyProducerRefs.computeIfAbsent(producer.getProperty(), k -> new ProducerRef<>())
-                .setProducer((Producer) producer);
+    public void add(String property, Producer<?> producer) {
+        propertyProducerRefs.computeIfAbsent(property, k -> new ProducerRef<>(null))
+                .changeProducer((Producer) producer);
     }
 
     @SuppressWarnings("unchecked")
     public void produce(Object data) {
-        propertyProducerRefs.forEach((k, v) -> type.setPropertyValue(data, k, v.getProducer().produce()));
+        propertyProducerRefs.forEach((k, v) -> type.setPropertyValue(data, k, v.produce()));
     }
 
     Collection<ProducerRef<?>> getProducers() {
-        return propertyProducerRefs.values();
+        return collectChildren(propertyProducerRefs.values());
     }
 }

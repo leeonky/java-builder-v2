@@ -20,7 +20,7 @@ class BeanSpec<T> implements Spec<T> {
         }
 
         public void value(Object value) {
-            beanProducers.add(new ValueProducer<>(property, value));
+            beanProducers.add(property, new ValueProducer<>(value));
         }
     }
 }

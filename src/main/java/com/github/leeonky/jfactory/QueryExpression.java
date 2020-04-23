@@ -74,7 +74,7 @@ class QueryExpression<T> {
     }
 
     public void queryOrCreateNested(FactorySet factorySet, BeanProducers beanProducers) {
-        beanProducers.add(conditionValue.buildProducer(factorySet));
+        beanProducers.add(property, conditionValue.buildProducer(factorySet));
     }
 
     private abstract class ConditionValue {
@@ -131,7 +131,7 @@ class QueryExpression<T> {
         public Producer<?> buildProducer(FactorySet factorySet) {
             if (isIntently())
                 return toBuilder(factorySet, beanClass.getPropertyWriter(property).getElementOrPropertyType()).producer(property);
-            return new ValueProducer<>(property, value);
+            return new ValueProducer<>(value);
         }
 
         @Override
@@ -177,7 +177,7 @@ class QueryExpression<T> {
             if (collection.isEmpty())
                 return toBuilder(factorySet, beanClass.getPropertyWriter(property).getElementOrPropertyType()).producer(property);
             else
-                return new ValueProducer<Object>(property, collection.iterator().next());
+                return new ValueProducer<Object>(collection.iterator().next());
         }
 
         private Builder<?> toBuilder(FactorySet factorySet, Class<?> propertyType) {
@@ -238,7 +238,7 @@ class QueryExpression<T> {
 
         @Override
         public Producer<?> buildProducer(FactorySet factorySet) {
-            CollectionProducer<Object> producer = new CollectionProducer<>(beanClass.getPropertyWriter(property),
+            CollectionProducer<Object> producer = new CollectionProducer<>(beanClass.getPropertyWriter(property).getPropertyTypeWrapper(),
                     conditionValueIndexMap.keySet().stream().max(Integer::compareTo).orElse(0) + 1);
             conditionValueIndexMap.forEach((k, v) -> producer.setElementProducer(k, v.buildProducer(factorySet)));
             return producer;

@@ -3,8 +3,7 @@ package com.github.leeonky.jfactory;
 class ValueProducer<T> extends Producer<T> {
     private final T value;
 
-    ValueProducer(String property, T value) {
-        super(property);
+    ValueProducer(T value) {
         this.value = value;
     }
 

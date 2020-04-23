@@ -5,7 +5,6 @@ class ValueFactoryProducer<T> extends Producer<T> {
     private final Argument argument;
 
     public ValueFactoryProducer(BeanFactory<T> beanFactory, Argument argument) {
-        super(argument.getProperty());
         this.beanFactory = beanFactory;
         this.argument = argument;
     }
