@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -13,15 +14,18 @@ class BeanFactoryProducer<T> extends Producer<T> {
     private final Argument argument;
     private final Map<String, Object> properties;
     private final List<String> mixIns;
+    private final BiConsumer<Argument, Spec<T>> typeMixIn;
     private final BeanProducers beanProducers;
 
-    public BeanFactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument, Map<String, Object> properties, List<String> mixIns) {
+    public BeanFactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument,
+                               Map<String, Object> properties, List<String> mixIns, BiConsumer<Argument, Spec<T>> typeMixIn) {
         this.factorySet = factorySet;
         this.beanFactory = beanFactory;
         this.argument = argument;
         this.properties = properties;
         this.mixIns = mixIns;
-        beanProducers = new BeanProducers(beanFactory, argument, mixIns);
+        this.typeMixIn = typeMixIn;
+        beanProducers = new BeanProducers(beanFactory, argument, mixIns, typeMixIn);
         QueryExpression.createQueryExpressions(beanFactory.getType(), properties)
                 .forEach(exp -> exp.queryOrCreateNested(factorySet, beanProducers));
     }
@@ -50,7 +54,8 @@ class BeanFactoryProducer<T> extends Producer<T> {
 
     @Override
     public int hashCode() {
-        return String.format("BeanFactory:%d;MixIn:%d;Properties:%d", beanFactory.hashCode(), mixIns.hashCode(), properties.hashCode()).hashCode();
+        return String.format("BeanFactory:%d;MixIn:%d;Properties:%d:TypeMixIn:%d",
+                beanFactory.hashCode(), mixIns.hashCode(), properties.hashCode(), typeMixIn.hashCode()).hashCode();
     }
 
     @Override
@@ -59,6 +64,7 @@ class BeanFactoryProducer<T> extends Producer<T> {
             BeanFactoryProducer another = (BeanFactoryProducer) obj;
             return Objects.equals(beanFactory, another.beanFactory)
                     && Objects.equals(mixIns, another.mixIns)
+                    && Objects.equals(typeMixIn, another.typeMixIn)
                     && Objects.equals(properties, another.properties);
         }
         return super.equals(obj);

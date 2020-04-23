@@ -22,6 +22,14 @@ class _05_CustomizedBuildInClass {
     }
 
     @Test
+    void support_use_definition_and_mix_in_in_java_code() {
+        assertThat(factorySet.toBuild(ABean.class, mixIn -> mixIn.int100().strHello()).create())
+                .hasFieldOrPropertyWithValue("content", "this is a bean")
+                .hasFieldOrPropertyWithValue("stringValue", "hello")
+                .hasFieldOrPropertyWithValue("intValue", 100);
+    }
+
+    @Test
     void should_call_type_base_construct_and_definition() {
         factorySet.factory(Bean.class).construct(arg -> new BeanSub()).define((arg, spec) -> {
             spec.property("intValue").value(50);
@@ -96,13 +104,15 @@ class _05_CustomizedBuildInClass {
         }
 
         @MixIn
-        public void int100() {
+        public ABean int100() {
             spec().property("intValue").value(100);
+            return this;
         }
 
         @MixIn("hello")
-        public void strHello() {
+        public ABean strHello() {
             spec().property("stringValue").value("hello");
+            return this;
         }
     }
 }

@@ -5,6 +5,7 @@ import com.github.leeonky.util.BeanClass;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class FactorySet {
     private final Map<Class<?>, Integer> sequences = new HashMap<>();
@@ -72,5 +73,12 @@ public class FactorySet {
 
     public void clearRepo() {
         getDataRepository().clear();
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T, D extends Definition<T>> Builder<T> toBuild(Class<D> definition, Consumer<D> mixIn) {
+        define(definition);
+        return new Builder<>(this, (BeanFactory<T>) customizedFactoryInType.get(definition))
+                .mixIn((arg, spec) -> mixIn.accept((D) BeanClass.newInstance(definition).setContext(arg, spec)));
     }
 }

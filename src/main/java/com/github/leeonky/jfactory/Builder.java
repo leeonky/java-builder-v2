@@ -1,6 +1,7 @@
 package com.github.leeonky.jfactory;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 import static java.util.Arrays.asList;
 
@@ -10,6 +11,8 @@ public class Builder<T> {
     private final Map<String, Object> properties = new LinkedHashMap<>();
     private final Map<String, Object> params = new HashMap<>();
     private final List<String> mixIns = new ArrayList<>();
+    private BiConsumer<Argument, Spec<T>> typeMixIn = (arg, spec) -> {
+    };
 
     Builder(FactorySet factorySet, BeanFactory<T> beanFactory) {
         this.factorySet = factorySet;
@@ -23,7 +26,7 @@ public class Builder<T> {
     }
 
     BeanFactoryProducer<T> producer(String property) {
-        return new BeanFactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params), properties, mixIns);
+        return new BeanFactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params), properties, mixIns, typeMixIn);
     }
 
     public T query() {
@@ -46,6 +49,7 @@ public class Builder<T> {
         newBuilder.properties.putAll(properties);
         newBuilder.params.putAll(params);
         newBuilder.mixIns.addAll(mixIns);
+        newBuilder.typeMixIn = typeMixIn;
         return newBuilder;
     }
 
@@ -65,5 +69,10 @@ public class Builder<T> {
         Builder<T> newBuilder = copy();
         newBuilder.mixIns.addAll(asList(names));
         return newBuilder;
+    }
+
+    Builder<T> mixIn(BiConsumer<Argument, Spec<T>> mixIn) {
+        typeMixIn = mixIn;
+        return this;
     }
 }

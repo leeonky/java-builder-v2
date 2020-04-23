@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import static com.github.leeonky.jfactory.Producer.collectChildren;
 
@@ -13,7 +14,8 @@ class BeanProducers {
     private final Map<String, ProducerRef<?>> propertyProducerRefs = new LinkedHashMap<>();
     private final BeanClass type;
 
-    public <T> BeanProducers(BeanFactory<T> beanFactory, Argument argument, List<String> mixIns) {
+    public <T> BeanProducers(BeanFactory<T> beanFactory, Argument argument, List<String> mixIns,
+                             BiConsumer<Argument, Spec<T>> typeMixIn) {
         type = beanFactory.getType();
         beanFactory.getPropertyWriters()
                 .forEach((name, propertyWriter) ->
@@ -21,6 +23,7 @@ class BeanProducers {
                                 add(name, new ValueFactoryProducer<>(fieldFactory, argument.newProperty(name)))));
         BeanSpec<T> beanSpec = new BeanSpec<>(this);
         beanFactory.collectSpec(argument, beanSpec);
+        typeMixIn.accept(argument, beanSpec);
         beanFactory.collectMixInSpecs(argument, mixIns, beanSpec);
     }
 
