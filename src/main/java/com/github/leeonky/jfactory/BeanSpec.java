@@ -1,10 +1,16 @@
 package com.github.leeonky.jfactory;
 
-class BeanSpec<T> implements Spec<T> {
-    private final BeanProducers beanProducers;
+import java.util.function.Consumer;
 
-    public BeanSpec(BeanProducers beanProducers) {
+public class BeanSpec implements Spec {
+    private final BeanProducers beanProducers;
+    private final FactorySet factorySet;
+    private final Argument argument;
+
+    public BeanSpec(BeanProducers beanProducers, FactorySet factorySet, Argument argument) {
         this.beanProducers = beanProducers;
+        this.factorySet = factorySet;
+        this.argument = argument;
     }
 
     @Override
@@ -21,6 +27,14 @@ class BeanSpec<T> implements Spec<T> {
 
         public void value(Object value) {
             beanProducers.add(property, new ValueProducer<>(value));
+        }
+
+        public <T> void supposeFrom(Class<? extends Definition<T>> definition) {
+            beanProducers.add(property, factorySet.toBuild(definition).params(argument.getParams()).producer(property));
+        }
+
+        public <T, D extends Definition<T>> void supposeFrom(Class<D> definition, Consumer<D> mixIn) {
+            beanProducers.add(property, factorySet.toBuild(definition, mixIn).params(argument.getParams()).producer(property));
         }
     }
 }

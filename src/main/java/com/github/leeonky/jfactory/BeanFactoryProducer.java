@@ -14,18 +14,18 @@ class BeanFactoryProducer<T> extends Producer<T> {
     private final Argument argument;
     private final Map<String, Object> properties;
     private final List<String> mixIns;
-    private final BiConsumer<Argument, Spec<T>> typeMixIn;
+    private final BiConsumer<Argument, Spec> typeMixIn;
     private final BeanProducers beanProducers;
 
     public BeanFactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument,
-                               Map<String, Object> properties, List<String> mixIns, BiConsumer<Argument, Spec<T>> typeMixIn) {
+                               Map<String, Object> properties, List<String> mixIns, BiConsumer<Argument, Spec> typeMixIn) {
         this.factorySet = factorySet;
         this.beanFactory = beanFactory;
         this.argument = argument;
         this.properties = properties;
         this.mixIns = mixIns;
         this.typeMixIn = typeMixIn;
-        beanProducers = new BeanProducers(beanFactory, argument, mixIns, typeMixIn);
+        beanProducers = new BeanProducers(beanFactory, argument, mixIns, typeMixIn, factorySet);
         QueryExpression.createQueryExpressions(beanFactory.getType(), properties)
                 .forEach(exp -> exp.queryOrCreateNested(factorySet, beanProducers));
     }

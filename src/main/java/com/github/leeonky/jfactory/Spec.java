@@ -1,5 +1,5 @@
 package com.github.leeonky.jfactory;
 
-public interface Spec<T> {
+public interface Spec {
     BeanSpec.PropertySpec property(String stringValue);
 }

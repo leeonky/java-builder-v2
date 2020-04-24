@@ -15,13 +15,13 @@ class BeanProducers {
     private final BeanClass type;
 
     public <T> BeanProducers(BeanFactory<T> beanFactory, Argument argument, List<String> mixIns,
-                             BiConsumer<Argument, Spec<T>> typeMixIn) {
+                             BiConsumer<Argument, Spec> typeMixIn, FactorySet factorySet) {
         type = beanFactory.getType();
         beanFactory.getPropertyWriters()
                 .forEach((name, propertyWriter) ->
                         ValueFactories.of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
                                 add(name, new ValueFactoryProducer<>(fieldFactory, argument.newProperty(name)))));
-        BeanSpec<T> beanSpec = new BeanSpec<>(this);
+        BeanSpec beanSpec = new BeanSpec(this, factorySet, argument);
         beanFactory.collectSpec(argument, beanSpec);
         typeMixIn.accept(argument, beanSpec);
         beanFactory.collectMixInSpecs(argument, mixIns, beanSpec);

@@ -11,7 +11,7 @@ public class Builder<T> {
     private final Map<String, Object> properties = new LinkedHashMap<>();
     private final Map<String, Object> params = new HashMap<>();
     private final List<String> mixIns = new ArrayList<>();
-    private BiConsumer<Argument, Spec<T>> typeMixIn = (arg, spec) -> {
+    private BiConsumer<Argument, Spec> typeMixIn = (arg, spec) -> {
     };
 
     Builder(FactorySet factorySet, BeanFactory<T> beanFactory) {
@@ -65,13 +65,19 @@ public class Builder<T> {
         return newBuilder;
     }
 
+    public Builder<T> params(Map<String, ?> params) {
+        Builder<T> newBuilder = copy();
+        newBuilder.params.putAll(params);
+        return newBuilder;
+    }
+
     public Builder<T> mixIn(String... names) {
         Builder<T> newBuilder = copy();
         newBuilder.mixIns.addAll(asList(names));
         return newBuilder;
     }
 
-    Builder<T> mixIn(BiConsumer<Argument, Spec<T>> mixIn) {
+    Builder<T> mixIn(BiConsumer<Argument, Spec> mixIn) {
         typeMixIn = mixIn;
         return this;
     }

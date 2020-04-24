@@ -153,7 +153,7 @@ class ValueFactories {
 
         @Override
         public Map<String, PropertyWriter<T>> getPropertyWriters() {
-            return new HashMap<>();
+            return Collections.emptyMap();
         }
     }
 }

@@ -27,6 +27,10 @@ public class Argument {
         return (T) params.get(p);
     }
 
+    public Map<String, Object> getParams() {
+        return params;
+    }
+
     Argument newProperty(String property) {
         return new Argument(property, sequence, params);
     }

@@ -12,9 +12,9 @@ import java.util.function.Function;
 
 class BeanFactory<T> implements Factory<T> {
     private final BeanClass<T> type;
-    private final Map<String, BiConsumer<Argument, Spec<T>>> mixIns = new HashMap<>();
+    private final Map<String, BiConsumer<Argument, Spec>> mixIns = new HashMap<>();
     private Function<Argument, T> constructor = this::newInstance;
-    private BiConsumer<Argument, Spec<T>> definition = (arg, spec) -> {
+    private BiConsumer<Argument, Spec> definition = (arg, spec) -> {
     };
 
     public BeanFactory(BeanClass<T> type) {
@@ -48,29 +48,29 @@ class BeanFactory<T> implements Factory<T> {
     }
 
     @Override
-    public Factory<T> define(BiConsumer<Argument, Spec<T>> definition) {
+    public Factory<T> define(BiConsumer<Argument, Spec> definition) {
         this.definition = Objects.requireNonNull(definition);
         return this;
     }
 
     @Override
-    public Factory<T> canMixIn(String name, BiConsumer<Argument, Spec<T>> mixIn) {
+    public Factory<T> canMixIn(String name, BiConsumer<Argument, Spec> mixIn) {
         mixIns.put(name, Objects.requireNonNull(mixIn));
         return this;
     }
 
-    public void collectSpec(Argument argument, BeanSpec<T> beanSpec) {
+    public void collectSpec(Argument argument, BeanSpec beanSpec) {
         definition.accept(argument, beanSpec);
     }
 
-    public void collectMixInSpecs(Argument argument, List<String> mixIns, BeanSpec<T> beanSpec) {
+    public void collectMixInSpecs(Argument argument, List<String> mixIns, BeanSpec beanSpec) {
         mixIns.stream()
                 .map(this::getMixIn)
                 .forEach(spec -> spec.accept(argument, beanSpec));
     }
 
-    private BiConsumer<Argument, Spec<T>> getMixIn(String name) {
-        BiConsumer<Argument, Spec<T>> mixIn = mixIns.get(name);
+    private BiConsumer<Argument, Spec> getMixIn(String name) {
+        BiConsumer<Argument, Spec> mixIn = mixIns.get(name);
         if (mixIn == null)
             throw new IllegalArgumentException("Mix-in `" + name + "` not exist");
         return mixIn;
