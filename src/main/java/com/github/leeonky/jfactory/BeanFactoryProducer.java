@@ -1,9 +1,6 @@
 package com.github.leeonky.jfactory;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -68,5 +65,20 @@ class BeanFactoryProducer<T> extends Producer<T> {
                     && Objects.equals(properties, another.properties);
         }
         return super.equals(obj);
+    }
+
+    @Override
+    public Producer<T> changeTo(Producer<T> producer) {
+        return producer.changeFrom(this);
+    }
+
+    @Override
+    protected Producer<T> changeFrom(BeanFactoryProducer<T> beanFactoryProducer) {
+        if (beanFactory instanceof CustomizedFactory)
+            return this;
+        Map<String, Object> overrideProperties = new LinkedHashMap<>(beanFactoryProducer.properties);
+        overrideProperties.putAll(properties);
+        return new BeanFactoryProducer<>(factorySet, beanFactoryProducer.beanFactory, argument,
+                overrideProperties, beanFactoryProducer.mixIns, beanFactoryProducer.typeMixIn);
     }
 }

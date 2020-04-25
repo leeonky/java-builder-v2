@@ -71,6 +71,24 @@ class _06_ComplexInputProperty {
     }
 
     public static class AnotherBean extends Definition<Bean> {
+
+        @Override
+        public void define() {
+            spec().property("content").value("this is another bean");
+        }
+
+        @MixIn
+        public void int200() {
+            spec().property("intValue").value(200);
+        }
+
+    }
+
+    public static class ABeans extends Definition<Beans> {
+        @Override
+        public void define() {
+            spec().property("bean").supposeFromMixIn(ABean.class, ABean::int100);
+        }
     }
 
     @Nested
@@ -328,6 +346,28 @@ class _06_ComplexInputProperty {
                     .create();
 
             assertThat(factorySet.type(Bean.class).queryAll()).hasSize(1);
+        }
+    }
+
+    @Nested
+    class OverrideDefinition {
+
+        @Test
+        void should_use_nested_definition_in_definition_when_property_not_specify_definition() {
+            assertThat(factorySet.toBuild(ABeans.class).property("bean.stringValue", "hello").create().getBean())
+                    .hasFieldOrPropertyWithValue("stringValue", "hello")
+                    .hasFieldOrPropertyWithValue("content", "this is a bean")
+                    .hasFieldOrPropertyWithValue("intValue", 100);
+        }
+
+        @Test
+        void should_use_specified_definition_when_property_specify_definition() {
+            factorySet.define(AnotherBean.class);
+
+            assertThat(factorySet.toBuild(ABeans.class).property("bean(int200 AnotherBean).stringValue", "hello").create().getBean())
+                    .hasFieldOrPropertyWithValue("stringValue", "hello")
+                    .hasFieldOrPropertyWithValue("content", "this is another bean")
+                    .hasFieldOrPropertyWithValue("intValue", 200);
         }
     }
 }

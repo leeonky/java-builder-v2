@@ -17,7 +17,7 @@ class ProducerRef<T> {
     }
 
     public void changeProducer(Producer<T> producer) {
-        this.producer = producer;
+        this.producer = this.producer == null ? producer : this.producer.changeTo(producer);
     }
 
     public ProducerRef<T> link(ProducerRef<T> another) {

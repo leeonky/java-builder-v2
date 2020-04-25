@@ -21,4 +21,12 @@ public abstract class Producer<T> {
     protected Collection<ProducerRef<?>> getChildren() {
         return Collections.emptyList();
     }
+
+    public Producer<T> changeTo(Producer<T> producer) {
+        return producer;
+    }
+
+    protected Producer<T> changeFrom(BeanFactoryProducer<T> beanFactoryProducer) {
+        return this;
+    }
 }
