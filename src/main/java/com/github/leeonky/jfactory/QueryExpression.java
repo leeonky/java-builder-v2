@@ -112,10 +112,6 @@ class QueryExpression<T> {
         private final String[] mixIns;
         private final String definition;
 
-        public SingleValue(Object value) {
-            this(value, new String[0], null);
-        }
-
         public SingleValue(Object value, String[] mixIns, String definition) {
             this.value = value;
             this.mixIns = mixIns;

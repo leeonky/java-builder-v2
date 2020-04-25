@@ -1,6 +1,7 @@
 package com.github.leeonky.jfactory;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class BeanSpec implements Spec {
     private final BeanProducers beanProducers;
@@ -33,8 +34,20 @@ public class BeanSpec implements Spec {
             beanProducers.add(property, factorySet.toBuild(definition).params(argument.getParams()).producer(property));
         }
 
-        public <T, D extends Definition<T>> void supposeFrom(Class<D> definition, Consumer<D> mixIn) {
+        public <T> void supposeFrom(Class<? extends Definition<T>> definition, Function<Builder<T>, Builder<T>> builder) {
+            beanProducers.add(property, builder.apply(factorySet.toBuild(definition).params(argument.getParams())).producer(property));
+        }
+
+        public <T, D extends Definition<T>> void supposeFromMixIn(Class<D> definition, Consumer<D> mixIn) {
             beanProducers.add(property, factorySet.toBuild(definition, mixIn).params(argument.getParams()).producer(property));
+        }
+
+        public void type(Class<?> type) {
+            beanProducers.add(property, factorySet.type(type).params(argument.getParams()).producer(property));
+        }
+
+        public <T> void type(Class<T> type, Function<Builder<T>, Builder<T>> builder) {
+            beanProducers.add(property, builder.apply(factorySet.type(type).params(argument.getParams())).producer(property));
         }
     }
 }

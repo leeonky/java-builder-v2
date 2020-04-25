@@ -67,11 +67,35 @@ class _05_CustomizedBuildInClass {
         }
     }
 
+    public static class ACustomizedBeans extends Definition<Beans> {
+
+        @Override
+        public void define() {
+            spec().property("bean").supposeFrom(ABean.class, builder -> builder.mixIn("int100"));
+        }
+    }
+
     public static class A100Beans extends Definition<Beans> {
 
         @Override
         public void define() {
-            spec().property("bean").supposeFrom(ABean.class, spec -> spec.int100());
+            spec().property("bean").supposeFromMixIn(ABean.class, spec -> spec.int100());
+        }
+    }
+
+    public static class APureBeans extends Definition<Beans> {
+
+        @Override
+        public void define() {
+            spec().property("bean").type(Bean.class);
+        }
+    }
+
+    public static class ACustomizedPureBeans extends Definition<Beans> {
+
+        @Override
+        public void define() {
+            spec().property("bean").type(Bean.class, builder -> builder.property("intValue", "100"));
         }
     }
 
@@ -151,6 +175,30 @@ class _05_CustomizedBuildInClass {
         void support_specify_definition_with_mix_in() {
             assertThat(factorySet.toBuild(A100Beans.class).create().getBean())
                     .hasFieldOrPropertyWithValue("content", "this is a bean")
+                    .hasFieldOrPropertyWithValue("intValue", 100);
+        }
+
+        @Test
+        void support_specify_customized_builder_args() {
+            assertThat(factorySet.toBuild(ACustomizedBeans.class).create().getBean())
+                    .hasFieldOrPropertyWithValue("content", "this is a bean")
+                    .hasFieldOrPropertyWithValue("intValue", 100);
+        }
+    }
+
+    @Nested
+    class SpecifyType {
+
+        @Test
+        void support_specify_type() {
+            assertThat(factorySet.toBuild(APureBeans.class).create().getBean())
+                    .isInstanceOf(Bean.class)
+            ;
+        }
+
+        @Test
+        void support_specify_customized_builder_args() {
+            assertThat(factorySet.toBuild(ACustomizedBeans.class).create().getBean())
                     .hasFieldOrPropertyWithValue("intValue", 100);
         }
     }
