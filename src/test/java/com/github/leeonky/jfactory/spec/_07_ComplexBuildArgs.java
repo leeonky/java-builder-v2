@@ -15,7 +15,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class _07_ComplexInputProperty {
+class _07_ComplexBuildArgs {
     private FactorySet factorySet = new FactorySet();
 
     @Getter
@@ -87,7 +87,7 @@ class _07_ComplexInputProperty {
     public static class ABeans extends Definition<Beans> {
         @Override
         public void define() {
-            spec().property("bean").supposeFromMixIn(ABean.class, ABean::int100);
+            spec().property("bean").fromMixIn(ABean.class, ABean::int100);
         }
     }
 

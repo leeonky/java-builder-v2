@@ -11,6 +11,7 @@ public class Builder<T> {
     private final Map<String, Object> properties = new LinkedHashMap<>();
     private final Map<String, Object> params = new HashMap<>();
     private final List<String> mixIns = new ArrayList<>();
+    private final Map<String, BiConsumer<Argument, BeanSpec.PropertySpec>> propertySpecs = new LinkedHashMap<>();
     private BiConsumer<Argument, Spec> typeMixIn = (arg, spec) -> {
     };
 
@@ -26,7 +27,8 @@ public class Builder<T> {
     }
 
     BeanFactoryProducer<T> producer(String property) {
-        return new BeanFactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params), properties, mixIns, typeMixIn);
+        return new BeanFactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params),
+                properties, mixIns, typeMixIn, propertySpecs);
     }
 
     public T query() {
@@ -50,6 +52,7 @@ public class Builder<T> {
         newBuilder.params.putAll(params);
         newBuilder.mixIns.addAll(mixIns);
         newBuilder.typeMixIn = typeMixIn;
+        newBuilder.propertySpecs.putAll(propertySpecs);
         return newBuilder;
     }
 
@@ -80,5 +83,11 @@ public class Builder<T> {
     Builder<T> mixIn(BiConsumer<Argument, Spec> mixIn) {
         typeMixIn = mixIn;
         return this;
+    }
+
+    public Builder<T> propertySpec(String property, BiConsumer<Argument, BeanSpec.PropertySpec> propertySpec) {
+        Builder<T> newBuilder = copy();
+        newBuilder.propertySpecs.put(property, propertySpec);
+        return newBuilder;
     }
 }

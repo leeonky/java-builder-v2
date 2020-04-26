@@ -45,6 +45,19 @@ class _06_SupportedDefinitionSpec {
         }
     }
 
+    @Getter
+    @Setter
+    public static class Father {
+        private Son son;
+    }
+
+    @Getter
+    @Setter
+    public static class Son {
+        private Father father;
+        private String name;
+    }
+
     @Nested
     class SpecifyValue {
 
@@ -61,11 +74,24 @@ class _06_SupportedDefinitionSpec {
         @Test
         void support_specify_value_supplier_in_definition() {
             factorySet.factory(Bean.class).define((arg, spec) ->
-                    spec.property("content").valueSupplier(() -> "hello"));
+                    spec.property("content").supplier(() -> "hello"));
 
             assertThat(factorySet.create(Bean.class))
                     .hasFieldOrPropertyWithValue("content", "hello")
             ;
+        }
+
+        @Test
+        void support_specify_current_object_in_nested_property() {
+            factorySet.factory(Father.class).define((argument, spec) ->
+                    spec.property("son").type(Son.class, sonBuilder ->
+                            sonBuilder.propertySpec("father", ((argument1, propertySpec) -> propertySpec.supplier(argument::current)))
+                    ));
+
+            Father father = factorySet.create(Father.class);
+
+            assertThat(father.getSon())
+                    .hasFieldOrPropertyWithValue("father", father);
         }
     }
 
@@ -75,7 +101,7 @@ class _06_SupportedDefinitionSpec {
         @Test
         void support_specify_definition() {
             factorySet.factory(Beans.class).define((arg, spec) ->
-                    spec.property("bean").supposeFrom(ABean.class));
+                    spec.property("bean").from(ABean.class));
 
             assertThat(factorySet.create(Beans.class).getBean())
                     .hasFieldOrPropertyWithValue("content", "this is a bean")
@@ -85,7 +111,7 @@ class _06_SupportedDefinitionSpec {
         @Test
         void support_specify_definition_with_mix_in() {
             factorySet.factory(Beans.class).define((arg, spec) ->
-                    spec.property("bean").supposeFromMixIn(ABean.class, ABean::int100));
+                    spec.property("bean").fromMixIn(ABean.class, ABean::int100));
 
             assertThat(factorySet.create(Beans.class).getBean())
                     .hasFieldOrPropertyWithValue("content", "this is a bean")
@@ -95,7 +121,7 @@ class _06_SupportedDefinitionSpec {
         @Test
         void support_specify_customized_builder_args() {
             factorySet.factory(Beans.class).define((arg, spec) ->
-                    spec.property("bean").supposeFrom(ABean.class, builder -> builder.mixIn("int100")));
+                    spec.property("bean").from(ABean.class, builder -> builder.mixIn("int100")));
 
             assertThat(factorySet.create(Beans.class).getBean())
                     .hasFieldOrPropertyWithValue("content", "this is a bean")

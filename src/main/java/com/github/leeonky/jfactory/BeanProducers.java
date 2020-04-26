@@ -15,7 +15,7 @@ class BeanProducers {
     private final BeanClass type;
 
     public <T> BeanProducers(BeanFactory<T> beanFactory, Argument argument, List<String> mixIns,
-                             BiConsumer<Argument, Spec> typeMixIn, FactorySet factorySet) {
+                             BiConsumer<Argument, Spec> typeMixIn, FactorySet factorySet, Map<String, BiConsumer<Argument, BeanSpec.PropertySpec>> propertySpecs) {
         type = beanFactory.getType();
         beanFactory.getPropertyWriters()
                 .forEach((name, propertyWriter) ->
@@ -25,6 +25,7 @@ class BeanProducers {
         beanFactory.collectSpec(argument, beanSpec);
         typeMixIn.accept(argument, beanSpec);
         beanFactory.collectMixInSpecs(argument, mixIns, beanSpec);
+        propertySpecs.forEach((property, spec) -> spec.accept(argument, beanSpec.property(property)));
     }
 
     @SuppressWarnings("unchecked")

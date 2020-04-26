@@ -13,16 +13,19 @@ class BeanFactoryProducer<T> extends Producer<T> {
     private final List<String> mixIns;
     private final BiConsumer<Argument, Spec> typeMixIn;
     private final BeanProducers beanProducers;
+    private final Map<String, BiConsumer<Argument, BeanSpec.PropertySpec>> propertySpecs;
 
     public BeanFactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument,
-                               Map<String, Object> properties, List<String> mixIns, BiConsumer<Argument, Spec> typeMixIn) {
+                               Map<String, Object> properties, List<String> mixIns, BiConsumer<Argument, Spec> typeMixIn,
+                               Map<String, BiConsumer<Argument, BeanSpec.PropertySpec>> propertySpecs) {
         this.factorySet = factorySet;
         this.beanFactory = beanFactory;
         this.argument = argument;
         this.properties = properties;
         this.mixIns = mixIns;
         this.typeMixIn = typeMixIn;
-        beanProducers = new BeanProducers(beanFactory, argument, mixIns, typeMixIn, factorySet);
+        this.propertySpecs = propertySpecs;
+        beanProducers = new BeanProducers(beanFactory, argument, mixIns, typeMixIn, factorySet, propertySpecs);
         QueryExpression.createQueryExpressions(beanFactory.getType(), properties)
                 .forEach(exp -> exp.queryOrCreateNested(factorySet, beanProducers));
     }
@@ -30,6 +33,7 @@ class BeanFactoryProducer<T> extends Producer<T> {
     @Override
     public T produce() {
         T value = beanFactory.create(argument);
+        argument.setCurrent(value);
         beanProducers.produce(value);
         factorySet.getDataRepository().save(value);
         return value;
@@ -62,7 +66,9 @@ class BeanFactoryProducer<T> extends Producer<T> {
             return Objects.equals(beanFactory, another.beanFactory)
                     && Objects.equals(mixIns, another.mixIns)
                     && Objects.equals(typeMixIn, another.typeMixIn)
-                    && Objects.equals(properties, another.properties);
+                    && Objects.equals(properties, another.properties)
+                    && Objects.equals(propertySpecs, another.propertySpecs)
+                    ;
         }
         return super.equals(obj);
     }
@@ -79,6 +85,6 @@ class BeanFactoryProducer<T> extends Producer<T> {
         Map<String, Object> overrideProperties = new LinkedHashMap<>(beanFactoryProducer.properties);
         overrideProperties.putAll(properties);
         return new BeanFactoryProducer<>(factorySet, beanFactoryProducer.beanFactory, argument,
-                overrideProperties, beanFactoryProducer.mixIns, beanFactoryProducer.typeMixIn);
+                overrideProperties, beanFactoryProducer.mixIns, beanFactoryProducer.typeMixIn, propertySpecs);
     }
 }

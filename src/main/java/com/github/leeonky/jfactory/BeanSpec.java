@@ -31,15 +31,15 @@ public class BeanSpec implements Spec {
             beanProducers.add(property, new ValueProducer<>(() -> value));
         }
 
-        public <T> void supposeFrom(Class<? extends Definition<T>> definition) {
+        public <T> void from(Class<? extends Definition<T>> definition) {
             beanProducers.add(property, factorySet.toBuild(definition).params(argument.getParams()).producer(property));
         }
 
-        public <T> void supposeFrom(Class<? extends Definition<T>> definition, Function<Builder<T>, Builder<T>> builder) {
+        public <T> void from(Class<? extends Definition<T>> definition, Function<Builder<T>, Builder<T>> builder) {
             beanProducers.add(property, builder.apply(factorySet.toBuild(definition).params(argument.getParams())).producer(property));
         }
 
-        public <T, D extends Definition<T>> void supposeFromMixIn(Class<D> definition, Consumer<D> mixIn) {
+        public <T, D extends Definition<T>> void fromMixIn(Class<D> definition, Consumer<D> mixIn) {
             beanProducers.add(property, factorySet.toBuild(definition, mixIn).params(argument.getParams()).producer(property));
         }
 
@@ -51,7 +51,7 @@ public class BeanSpec implements Spec {
             beanProducers.add(property, builder.apply(factorySet.type(type).params(argument.getParams())).producer(property));
         }
 
-        public void valueSupplier(Supplier<?> supplier) {
+        public void supplier(Supplier<?> supplier) {
             beanProducers.add(property, new ValueProducer<>(supplier));
         }
     }
