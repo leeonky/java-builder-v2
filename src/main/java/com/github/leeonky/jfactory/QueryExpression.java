@@ -127,7 +127,7 @@ class QueryExpression<T> {
         public Producer<?> buildProducer(FactorySet factorySet) {
             if (isIntently())
                 return toBuilder(factorySet, beanClass.getPropertyWriter(property).getElementOrPropertyType()).producer(property);
-            return new ValueProducer<>(value);
+            return new ValueProducer<>(() -> value);
         }
 
         @Override
@@ -173,7 +173,7 @@ class QueryExpression<T> {
             if (collection.isEmpty())
                 return toBuilder(factorySet, beanClass.getPropertyWriter(property).getElementOrPropertyType()).producer(property);
             else
-                return new ValueProducer<Object>(collection.iterator().next());
+                return new ValueProducer<>(() -> collection.iterator().next());
         }
 
         private Builder<?> toBuilder(FactorySet factorySet, Class<?> propertyType) {

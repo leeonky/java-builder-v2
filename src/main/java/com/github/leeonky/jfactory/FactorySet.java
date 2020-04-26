@@ -41,6 +41,15 @@ public class FactorySet {
         return type(type).create();
     }
 
+    public <T, D extends Definition<T>> T createFrom(Class<D> definition) {
+        return toBuild(definition).create();
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T createFrom(String definition) {
+        return (T) toBuild(definition).create();
+    }
+
     public <T> Factory<T> factory(Class<T> type) {
         return queryObjectFactory(type);
     }

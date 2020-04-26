@@ -2,6 +2,7 @@ package com.github.leeonky.jfactory;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class BeanSpec implements Spec {
     private final BeanProducers beanProducers;
@@ -27,7 +28,7 @@ public class BeanSpec implements Spec {
         }
 
         public void value(Object value) {
-            beanProducers.add(property, new ValueProducer<>(value));
+            beanProducers.add(property, new ValueProducer<>(() -> value));
         }
 
         public <T> void supposeFrom(Class<? extends Definition<T>> definition) {
@@ -48,6 +49,10 @@ public class BeanSpec implements Spec {
 
         public <T> void type(Class<T> type, Function<Builder<T>, Builder<T>> builder) {
             beanProducers.add(property, builder.apply(factorySet.type(type).params(argument.getParams())).producer(property));
+        }
+
+        public void valueSupplier(Supplier<?> supplier) {
+            beanProducers.add(property, new ValueProducer<>(supplier));
         }
     }
 }

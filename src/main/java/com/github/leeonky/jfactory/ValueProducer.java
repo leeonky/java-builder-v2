@@ -1,14 +1,16 @@
 package com.github.leeonky.jfactory;
 
-class ValueProducer<T> extends Producer<T> {
-    private final T value;
+import java.util.function.Supplier;
 
-    ValueProducer(T value) {
-        this.value = value;
+class ValueProducer<T> extends Producer<T> {
+    private final Supplier<T> supplier;
+
+    ValueProducer(Supplier<T> supplier) {
+        this.supplier = supplier;
     }
 
     @Override
     public T produce() {
-        return value;
+        return supplier.get();
     }
 }
