@@ -234,8 +234,7 @@ class QueryExpression<T> {
 
         @Override
         public Producer<?> buildProducer(FactorySet factorySet) {
-            CollectionProducer<Object> producer = new CollectionProducer<>(beanClass.getPropertyWriter(property).getPropertyTypeWrapper(),
-                    conditionValueIndexMap.keySet().stream().max(Integer::compareTo).orElse(0) + 1);
+            CollectionProducer<Object> producer = new CollectionProducer<>(beanClass.getPropertyWriter(property).getPropertyTypeWrapper());
             conditionValueIndexMap.forEach((k, v) -> producer.setElementProducer(k, v.buildProducer(factorySet)));
             return producer;
         }

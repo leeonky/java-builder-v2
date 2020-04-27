@@ -37,6 +37,10 @@ class ProducerRef<T> {
         return value;
     }
 
+    public Producer<T> get() {
+        return producer;
+    }
+
     @Override
     public int hashCode() {
         return producer.hashCode();

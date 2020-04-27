@@ -21,38 +21,65 @@ public class BeanSpec implements Spec {
     }
 
     public class PropertySpec {
-        private final String property;
+        protected final String property;
 
         PropertySpec(String property) {
             this.property = property;
         }
 
+
         public void value(Object value) {
-            beanProducers.add(property, new ValueProducer<>(() -> value));
+            addProducer(new ValueProducer<>(() -> value));
+        }
+
+        protected void addProducer(Producer<?> producer) {
+            beanProducers.add(property, producer);
         }
 
         public <T> void from(Class<? extends Definition<T>> definition) {
-            beanProducers.add(property, factorySet.toBuild(definition).params(argument.getParams()).producer(property));
+            addProducer(factorySet.toBuild(definition).params(argument.getParams()).producer(property));
         }
 
         public <T> void from(Class<? extends Definition<T>> definition, Function<Builder<T>, Builder<T>> builder) {
-            beanProducers.add(property, builder.apply(factorySet.toBuild(definition).params(argument.getParams())).producer(property));
+            addProducer(builder.apply(factorySet.toBuild(definition).params(argument.getParams())).producer(property));
         }
 
         public <T, D extends Definition<T>> void fromMixIn(Class<D> definition, Consumer<D> mixIn) {
-            beanProducers.add(property, factorySet.toBuild(definition, mixIn).params(argument.getParams()).producer(property));
+            addProducer(factorySet.toBuild(definition, mixIn).params(argument.getParams()).producer(property));
         }
 
         public void type(Class<?> type) {
-            beanProducers.add(property, factorySet.type(type).params(argument.getParams()).producer(property));
+            addProducer(factorySet.type(type).params(argument.getParams()).producer(property));
         }
 
         public <T> void type(Class<T> type, Function<Builder<T>, Builder<T>> builder) {
-            beanProducers.add(property, builder.apply(factorySet.type(type).params(argument.getParams())).producer(property));
+            addProducer(builder.apply(factorySet.type(type).params(argument.getParams())).producer(property));
         }
 
         public void supplier(Supplier<?> supplier) {
-            beanProducers.add(property, new ValueProducer<>(supplier));
+            addProducer(new ValueProducer<>(supplier));
         }
+
+        public PropertySpec at(int index) {
+            return new CollectionElementSpec(property, index);
+        }
+    }
+
+    class CollectionElementSpec extends PropertySpec {
+
+        private final int index;
+
+        public CollectionElementSpec(String property, int index) {
+            super(property);
+            this.index = index;
+        }
+
+        @Override
+        protected void addProducer(Producer<?> producer) {
+            ((CollectionProducer<?>) beanProducers.getOrAdd(property, () ->
+                    new CollectionProducer<>(beanProducers.getType().getPropertyWriter(property).getPropertyTypeWrapper())))
+                    .setElementProducer(index, producer);
+        }
+
     }
 }

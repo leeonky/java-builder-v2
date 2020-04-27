@@ -8,6 +8,8 @@ import lombok.Setter;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class _06_SupportedDefinitionSpec {
@@ -58,6 +60,30 @@ class _06_SupportedDefinitionSpec {
         private String name;
     }
 
+    @Getter
+    @Setter
+    public static class Table {
+        private List<Row> rows;
+    }
+
+    @Getter
+    @Setter
+    public static class Row {
+        private Table table;
+        private int value;
+    }
+
+    public static class ATable extends Definition<Table> {
+
+        @Override
+        public void define() {
+            spec().property("rows").at(0).type(Row.class, builder ->
+                    builder.propertySpec("table", (arg, pSpec) ->
+                            pSpec.supplier(argument().current())).property("value", 100)
+            );
+        }
+    }
+
     @Nested
     class SpecifyValue {
 
@@ -85,7 +111,7 @@ class _06_SupportedDefinitionSpec {
         void support_specify_current_object_in_nested_property() {
             factorySet.factory(Father.class).define((argument, spec) ->
                     spec.property("son").type(Son.class, sonBuilder ->
-                            sonBuilder.propertySpec("father", ((argument1, propertySpec) -> propertySpec.supplier(argument::current)))
+                            sonBuilder.propertySpec("father", ((argument1, propertySpec) -> propertySpec.supplier(argument.current())))
                     ));
 
             Father father = factorySet.create(Father.class);
@@ -149,6 +175,22 @@ class _06_SupportedDefinitionSpec {
 
             assertThat(factorySet.create(Beans.class).getBean())
                     .hasFieldOrPropertyWithValue("intValue", 100);
+        }
+    }
+
+    @Nested
+    class CollectionProperty {
+
+        @Test
+        void support_define_collection_element_spec() {
+            Table table = factorySet.createFrom(ATable.class);
+
+            assertThat(table.getRows())
+                    .hasSize(1);
+
+            assertThat(table.getRows().get(0))
+                    .hasFieldOrPropertyWithValue("table", table)
+                    .hasFieldOrPropertyWithValue("value", 100);
         }
     }
 }

@@ -2,6 +2,7 @@ package com.github.leeonky.jfactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class Argument {
     private final String property;
@@ -41,9 +42,7 @@ public class Argument {
         return new Argument(property, sequence, params);
     }
 
-    public Object current() {
-        if (current == null)
-            throw new IllegalStateException("Argument::current() should only be called in Supplier<T> lambda");
-        return current;
+    public Supplier<Object> current() {
+        return () -> current;
     }
 }

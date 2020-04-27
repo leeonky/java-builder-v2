@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import static com.github.leeonky.jfactory.Producer.collectChildren;
 
@@ -39,7 +40,23 @@ class BeanProducers {
         propertyProducerRefs.forEach((k, v) -> type.setPropertyValue(data, k, v.produce()));
     }
 
-    Collection<ProducerRef<?>> getProducers() {
+    public Collection<ProducerRef<?>> getProducers() {
         return collectChildren(propertyProducerRefs.values());
+    }
+
+    public BeanClass<?> getType() {
+        return type;
+    }
+
+    private Producer<?> getProducer(String property) {
+        ProducerRef<?> producerRef = propertyProducerRefs.get(property);
+        return producerRef == null ? null : producerRef.get();
+    }
+
+    public Producer<?> getOrAdd(String property, Supplier<Producer<?>> supplier) {
+        Producer<?> producer = getProducer(property);
+        if (producer == null)
+            add(property, producer = supplier.get());
+        return producer;
     }
 }
