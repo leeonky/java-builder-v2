@@ -17,6 +17,9 @@ public class BeanSpec implements Spec {
 
     @Override
     public PropertySpec property(String property) {
+        String[] propertyAndIndex = property.split("\\[|\\]");
+        if (propertyAndIndex.length > 1)
+            return new CollectionElementSpec(propertyAndIndex[0], Integer.valueOf(propertyAndIndex[1]));
         return new PropertySpec(property);
     }
 
@@ -60,8 +63,7 @@ public class BeanSpec implements Spec {
             addProducer(new ValueProducer<>(supplier));
         }
 
-        public PropertySpec at(int index) {
-            return new CollectionElementSpec(property, index);
+        public void dependsOn(String property, Function<Object, Object> dependency) {
         }
     }
 

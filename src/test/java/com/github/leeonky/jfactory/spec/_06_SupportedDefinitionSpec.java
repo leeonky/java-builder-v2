@@ -77,7 +77,7 @@ class _06_SupportedDefinitionSpec {
 
         @Override
         public void define() {
-            spec().property("rows").at(0).type(Row.class, builder ->
+            spec().property("rows[0]").type(Row.class, builder ->
                     builder.propertySpec("table", (arg, pSpec) ->
                             pSpec.supplier(argument().current())).property("value", 100)
             );
