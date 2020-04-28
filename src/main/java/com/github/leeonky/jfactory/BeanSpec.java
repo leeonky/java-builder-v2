@@ -1,8 +1,12 @@
 package com.github.leeonky.jfactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static java.util.Collections.singletonList;
 
 public class BeanSpec implements Spec {
     private final BeanProducers beanProducers;
@@ -64,6 +68,16 @@ public class BeanSpec implements Spec {
         }
 
         public void dependsOn(String property, Function<Object, Object> dependency) {
+            List<Object> beanIndexes = beanProducers.getProducer().getIndexes();
+
+            List<Object> propertyIndexChain = new ArrayList<>(beanIndexes);
+            propertyIndexChain.add(this.property);
+
+            List<Object> dependencyIndexChain = new ArrayList<>(beanIndexes);
+            dependencyIndexChain.add(property);
+
+            beanProducers.getProducer().getRoot()
+                    .addDependency(propertyIndexChain, singletonList(dependencyIndexChain), (deps) -> dependency.apply(deps.get(0)));
         }
     }
 

@@ -14,6 +14,7 @@ class BeanFactoryProducer<T> extends Producer<T> {
     private final BiConsumer<Argument, Spec> typeMixIn;
     private final BeanProducers beanProducers;
     private final Map<String, BiConsumer<Argument, BeanSpec.PropertySpec>> propertySpecs;
+    private Map<List<Object>, PropertyDependency<?>> dependencies = new LinkedHashMap<>();
 
     public BeanFactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument,
                                Map<String, Object> properties, List<String> mixIns, BiConsumer<Argument, Spec> typeMixIn,
@@ -25,7 +26,7 @@ class BeanFactoryProducer<T> extends Producer<T> {
         this.mixIns = mixIns;
         this.typeMixIn = typeMixIn;
         this.propertySpecs = propertySpecs;
-        beanProducers = new BeanProducers(beanFactory, argument, mixIns, typeMixIn, factorySet, propertySpecs);
+        beanProducers = new BeanProducers(beanFactory, argument, mixIns, typeMixIn, factorySet, propertySpecs, this);
         QueryExpression.createQueryExpressions(beanFactory.getType(), properties)
                 .forEach(exp -> exp.queryOrCreateNested(factorySet, beanProducers));
     }
@@ -41,6 +42,8 @@ class BeanFactoryProducer<T> extends Producer<T> {
 
     @SuppressWarnings("unchecked")
     public BeanFactoryProducer<T> processSpec() {
+        dependencies.values().forEach(propertyDependency -> propertyDependency.processDependency(this));
+
         getChildren().stream()
                 .filter(ProducerRef::isBeanFactoryProducer)
                 .collect(Collectors.groupingBy(Function.identity()))
@@ -86,5 +89,22 @@ class BeanFactoryProducer<T> extends Producer<T> {
         overrideProperties.putAll(properties);
         return new BeanFactoryProducer<>(factorySet, beanFactoryProducer.beanFactory, argument,
                 overrideProperties, beanFactoryProducer.mixIns, beanFactoryProducer.typeMixIn, propertySpecs);
+    }
+
+    @Override
+    protected Object indexOf(Producer<?> sub) {
+        return beanProducers.indexOf(sub);
+    }
+
+    @Override
+    public <T> void addDependency(List<Object> property, List<List<Object>> dependencies, Function<List<Object>, T> rule) {
+        this.dependencies.put(property, new PropertyDependency<>(property, dependencies, rule));
+    }
+
+    @Override
+    public ProducerRef<?> getByIndexes(List<Object> property) {
+        LinkedList<Object> leftProperty = new LinkedList<>(property);
+        ProducerRef<?> producerRef = beanProducers.getProducerRef((String) leftProperty.removeFirst());
+        return leftProperty.isEmpty() ? producerRef : producerRef.get().getByIndexes(leftProperty);
     }
 }
