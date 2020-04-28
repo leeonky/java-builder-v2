@@ -21,7 +21,7 @@ class ProducerRef<T> {
     }
 
     public ProducerRef<T> link(ProducerRef<T> another) {
-        another.producer = new LinkProducer<>(another);
+        another.producer = new LinkProducer<>(this);
         return this;
     }
 
