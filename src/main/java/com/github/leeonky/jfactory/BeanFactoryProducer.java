@@ -1,7 +1,6 @@
 package com.github.leeonky.jfactory;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -9,26 +8,16 @@ class BeanFactoryProducer<T> extends Producer<T> {
     private final FactorySet factorySet;
     private final BeanFactory<T> beanFactory;
     private final Argument argument;
-    private final Map<String, Object> properties;
-    private final List<String> mixIns;
-    private final BiConsumer<Argument, Spec> typeMixIn;
-    private final BeanProducers beanProducers;
-    private final Map<String, BiConsumer<Argument, BeanSpec.PropertySpec>> propertySpecs;
+    private final Builder<T>.BeanProducers beanProducers;
+    private Builder<T> builder;
     private Map<List<Object>, PropertyDependency<?>> dependencies = new LinkedHashMap<>();
 
-    public BeanFactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument,
-                               Map<String, Object> properties, List<String> mixIns, BiConsumer<Argument, Spec> typeMixIn,
-                               Map<String, BiConsumer<Argument, BeanSpec.PropertySpec>> propertySpecs) {
+    public BeanFactoryProducer(FactorySet factorySet, BeanFactory<T> beanFactory, Argument argument, Builder<T> builder) {
         this.factorySet = factorySet;
         this.beanFactory = beanFactory;
         this.argument = argument;
-        this.properties = properties;
-        this.mixIns = mixIns;
-        this.typeMixIn = typeMixIn;
-        this.propertySpecs = propertySpecs;
-        beanProducers = new BeanProducers(beanFactory, argument, mixIns, typeMixIn, factorySet, propertySpecs, this);
-        QueryExpression.createQueryExpressions(beanFactory.getType(), properties)
-                .forEach(exp -> exp.queryOrCreateNested(factorySet, beanProducers));
+        this.builder = builder;
+        beanProducers = builder.new BeanProducers(argument, this);
     }
 
     @Override
@@ -58,21 +47,13 @@ class BeanFactoryProducer<T> extends Producer<T> {
 
     @Override
     public int hashCode() {
-        return String.format("BeanFactory:%d;MixIn:%d;Properties:%d:TypeMixIn:%d",
-                beanFactory.hashCode(), mixIns.hashCode(), properties.hashCode(), typeMixIn.hashCode()).hashCode();
+        return beanProducers.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof BeanFactoryProducer) {
-            BeanFactoryProducer another = (BeanFactoryProducer) obj;
-            return Objects.equals(beanFactory, another.beanFactory)
-                    && Objects.equals(mixIns, another.mixIns)
-                    && Objects.equals(typeMixIn, another.typeMixIn)
-                    && Objects.equals(properties, another.properties)
-                    && Objects.equals(propertySpecs, another.propertySpecs)
-                    ;
-        }
+        if (obj instanceof BeanFactoryProducer)
+            return Objects.equals(beanProducers, ((BeanFactoryProducer) obj).beanProducers);
         return super.equals(obj);
     }
 
@@ -85,10 +66,7 @@ class BeanFactoryProducer<T> extends Producer<T> {
     protected Producer<T> changeFrom(BeanFactoryProducer<T> beanFactoryProducer) {
         if (beanFactory instanceof CustomizedFactory)
             return this;
-        Map<String, Object> overrideProperties = new LinkedHashMap<>(beanFactoryProducer.properties);
-        overrideProperties.putAll(properties);
-        return new BeanFactoryProducer<>(factorySet, beanFactoryProducer.beanFactory, argument,
-                overrideProperties, beanFactoryProducer.mixIns, beanFactoryProducer.typeMixIn, propertySpecs);
+        return new BeanFactoryProducer<>(factorySet, beanFactoryProducer.beanFactory, argument, builder.baseOn(beanFactoryProducer.builder));
     }
 
     @Override
@@ -118,11 +96,10 @@ class BeanFactoryProducer<T> extends Producer<T> {
         String p = (String) leftProperty.removeFirst();
         ProducerRef producerRef = beanProducers.getProducerRef(p);
         if (leftProperty.isEmpty()) {
-            if (producerRef == null) {
+            if (producerRef == null)
                 beanProducers.add(p, producer);
-            } else {
+            else
                 producerRef.changeProducer(producer);
-            }
         } else
             producerRef.get().changeByIndexes(property, producer);
     }

@@ -59,7 +59,7 @@ class _02_BeanTypeBasic {
 
     @Test
     void support_specify_property_spec() {
-        assertThat(factorySet.type(Bean.class).propertySpec("intValue", (arg, propertySpec) -> propertySpec.value(100)).create())
+        assertThat(factorySet.type(Bean.class).spec("intValue", (arg, propertySpec) -> propertySpec.value(100)).create())
                 .hasFieldOrPropertyWithValue("intValue", 100);
     }
 

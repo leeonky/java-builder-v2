@@ -73,7 +73,7 @@ class QueryExpression<T> {
         return conditionValue.matches(propertyReader.getElementOrPropertyType(), propertyReader.getValue(object));
     }
 
-    public void queryOrCreateNested(FactorySet factorySet, BeanProducers beanProducers) {
+    public void queryOrCreateNested(FactorySet factorySet, Builder.BeanProducers beanProducers) {
         beanProducers.add(property, conditionValue.buildProducer(factorySet));
     }
 

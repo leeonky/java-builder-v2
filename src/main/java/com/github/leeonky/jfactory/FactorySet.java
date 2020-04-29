@@ -89,14 +89,14 @@ public class FactorySet {
         return new Builder<>(this, beanFactory);
     }
 
-    public void clearRepo() {
-        getDataRepository().clear();
-    }
-
     @SuppressWarnings("unchecked")
     public <T, D extends Definition<T>> Builder<T> toBuild(Class<D> definition, Consumer<D> mixIn) {
         define(definition);
         return new Builder<>(this, (BeanFactory<T>) customizedFactoryInType.get(definition))
                 .mixIn((arg, spec) -> mixIn.accept((D) BeanClass.newInstance(definition).setContext(arg, spec)));
+    }
+
+    public void clearRepo() {
+        getDataRepository().clear();
     }
 }

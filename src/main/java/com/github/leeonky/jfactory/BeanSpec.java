@@ -9,11 +9,11 @@ import java.util.function.Supplier;
 import static java.util.Collections.singletonList;
 
 public class BeanSpec implements Spec {
-    private final BeanProducers beanProducers;
+    private final Builder<?>.BeanProducers beanProducers;
     private final FactorySet factorySet;
     private final Argument argument;
 
-    public BeanSpec(BeanProducers beanProducers, FactorySet factorySet, Argument argument) {
+    public BeanSpec(Builder<?>.BeanProducers beanProducers, FactorySet factorySet, Argument argument) {
         this.beanProducers = beanProducers;
         this.factorySet = factorySet;
         this.argument = argument;

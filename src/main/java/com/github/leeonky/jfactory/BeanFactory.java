@@ -56,15 +56,9 @@ class BeanFactory<T> implements Factory<T> {
     }
 
     public void collectMixInSpecs(Argument argument, List<String> mixIns, BeanSpec beanSpec) {
-        mixIns.stream()
-                .map(this::getMixIn)
-                .forEach(spec -> spec.accept(argument, beanSpec));
-    }
-
-    private BiConsumer<Argument, Spec> getMixIn(String name) {
-        BiConsumer<Argument, Spec> mixIn = mixIns.get(name);
-        if (mixIn == null)
-            throw new IllegalArgumentException("Mix-in `" + name + "` not exist");
-        return mixIn;
+        mixIns.stream().peek(name -> {
+            if (!this.mixIns.containsKey(name))
+                throw new IllegalArgumentException("Mix-in `" + name + "` not exist");
+        }).map(this.mixIns::get).forEach(spec -> spec.accept(argument, beanSpec));
     }
 }

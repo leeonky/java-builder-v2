@@ -78,7 +78,7 @@ class _06_SupportedDefinitionSpec {
         @Override
         public void define() {
             spec().property("rows[0]").type(Row.class, builder ->
-                    builder.propertySpec("table", (arg, pSpec) ->
+                    builder.spec("table", (arg, pSpec) ->
                             pSpec.supplier(argument().willGetCurrent())).property("value", 100)
             );
         }
@@ -111,7 +111,7 @@ class _06_SupportedDefinitionSpec {
         void support_specify_current_object_in_nested_property() {
             factorySet.factory(Father.class).define((argument, spec) ->
                     spec.property("son").type(Son.class, sonBuilder ->
-                            sonBuilder.propertySpec("father", ((argument1, propertySpec) -> propertySpec.supplier(argument.willGetCurrent())))
+                            sonBuilder.spec("father", ((argument1, propertySpec) -> propertySpec.supplier(argument.willGetCurrent())))
                     ));
 
             Father father = factorySet.create(Father.class);
