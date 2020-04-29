@@ -9,7 +9,7 @@ class ProducerRef<T> {
     private boolean produced = false;
 
     ProducerRef(Producer<T> producer) {
-        this.producer = producer;
+        this.producer = Objects.requireNonNull(producer);
     }
 
     public Collection<ProducerRef<?>> getChildren() {
@@ -17,7 +17,8 @@ class ProducerRef<T> {
     }
 
     public void changeProducer(Producer<T> producer) {
-        this.producer = this.producer == null ? producer : this.producer.changeTo(producer);
+        producer.setParent(this.producer.getParent());
+        this.producer = this.producer.changeTo(producer);
     }
 
     public ProducerRef<T> link(ProducerRef<T> another) {

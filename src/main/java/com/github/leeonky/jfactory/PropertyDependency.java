@@ -17,9 +17,16 @@ class PropertyDependency<T> {
 
     @SuppressWarnings("unchecked")
     public void processDependency(BeanFactoryProducer<?> producer) {
-        producer.getByIndexes(property).changeProducer(new DependencyProducer(
-                dependencies.stream().map(producer::getByIndexes).collect(Collectors.toList()),
-                rule
-        ));
+        ProducerRef<?> producerRef = producer.getByIndexes(property);
+        if (producerRef == null) {
+            producer.changeByIndexes(property, new DependencyProducer(
+                    dependencies.stream().map(producer::getByIndexes).collect(Collectors.toList()),
+                    rule
+            ));
+        } else
+            producerRef.changeProducer(new DependencyProducer(
+                    dependencies.stream().map(producer::getByIndexes).collect(Collectors.toList()),
+                    rule
+            ));
     }
 }

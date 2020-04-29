@@ -33,11 +33,6 @@ public abstract class Producer<T> {
         return this;
     }
 
-    public Producer<T> setParent(Producer<?> parent) {
-        this.parent = parent;
-        return this;
-    }
-
     public List<Object> getIndexes() {
         if (parent == null)
             return new ArrayList<>();
@@ -61,6 +56,19 @@ public abstract class Producer<T> {
     }
 
     public ProducerRef<?> getByIndexes(List<Object> property) {
+        throw new IllegalStateException(String.format("Only %s support query sub ProducerRef", BeanFactoryProducer.class.getName()));
+    }
+
+    public Producer<?> getParent() {
+        return parent;
+    }
+
+    public Producer<T> setParent(Producer<?> parent) {
+        this.parent = parent;
+        return this;
+    }
+
+    public void changeByIndexes(List<Object> property, Producer<?> producer) {
         throw new IllegalStateException(String.format("Only %s support query sub ProducerRef", BeanFactoryProducer.class.getName()));
     }
 }

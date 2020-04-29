@@ -105,6 +105,25 @@ class BeanFactoryProducer<T> extends Producer<T> {
     public ProducerRef<?> getByIndexes(List<Object> property) {
         LinkedList<Object> leftProperty = new LinkedList<>(property);
         ProducerRef<?> producerRef = beanProducers.getProducerRef((String) leftProperty.removeFirst());
-        return leftProperty.isEmpty() ? producerRef : producerRef.get().getByIndexes(leftProperty);
+        if (leftProperty.isEmpty())
+            return producerRef;
+        else
+            return producerRef.get().getByIndexes(leftProperty);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void changeByIndexes(List<Object> property, Producer<?> producer) {
+        LinkedList<Object> leftProperty = new LinkedList<>(property);
+        String p = (String) leftProperty.removeFirst();
+        ProducerRef producerRef = beanProducers.getProducerRef(p);
+        if (leftProperty.isEmpty()) {
+            if (producerRef == null) {
+                beanProducers.add(p, producer);
+            } else {
+                producerRef.changeProducer(producer);
+            }
+        } else
+            producerRef.get().changeByIndexes(property, producer);
     }
 }

@@ -27,7 +27,7 @@ class CollectionProducer<T> extends Producer<T> {
     public void setElementProducer(int index, Producer<?> producer) {
         for (int i = elementProducerRefs.size(); i <= index; i++)
             elementProducerRefs.add(new ProducerRef<>(new ValueProducer<>(() -> null).setParent(this)));
-        elementProducerRefs.get(index).changeProducer((Producer) producer.setParent(this));
+        elementProducerRefs.get(index).changeProducer((Producer) producer);
     }
 
     @Override

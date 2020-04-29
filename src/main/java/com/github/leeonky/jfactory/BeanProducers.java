@@ -56,7 +56,10 @@ class BeanProducers {
 
     private Producer<?> getProducer(String property) {
         ProducerRef<?> producerRef = propertyProducerRefs.get(property);
-        return producerRef == null ? null : producerRef.get();
+        if (producerRef == null)
+            return null;
+        else
+            return producerRef.get();
     }
 
     public ProducerRef<?> getProducerRef(String property) {
