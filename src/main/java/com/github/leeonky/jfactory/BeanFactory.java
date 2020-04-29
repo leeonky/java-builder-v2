@@ -21,15 +21,11 @@ class BeanFactory<T> implements Factory<T> {
         this.type = type;
     }
 
-    public static <T> BeanFactory<T> create(Class<T> type) {
-        return ValueFactories.of(type).orElseGet(() -> new BeanFactory<>(BeanClass.create(type)));
-    }
-
     protected T newInstance(Argument argument) {
         return getType().newInstance();
     }
 
-    public T create(Argument argument) {
+    public final T create(Argument argument) {
         return constructor.apply(argument);
     }
 

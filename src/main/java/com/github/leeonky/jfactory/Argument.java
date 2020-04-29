@@ -16,9 +16,8 @@ public class Argument {
         this.params.putAll(params);
     }
 
-    Argument setCurrent(Object current) {
+    void setCurrent(Object current) {
         this.current = current;
-        return this;
     }
 
     public int getSequence() {
@@ -34,15 +33,20 @@ public class Argument {
         return (T) params.get(p);
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> T param(String p, T defaultValue) {
+        return (T) params.getOrDefault(p, defaultValue);
+    }
+
     public Map<String, Object> getParams() {
         return params;
     }
 
-    Argument newProperty(String property) {
+    Argument forNested(String property) {
         return new Argument(property, sequence, params);
     }
 
-    public Supplier<Object> current() {
+    public Supplier<Object> willGetCurrent() {
         return () -> current;
     }
 }

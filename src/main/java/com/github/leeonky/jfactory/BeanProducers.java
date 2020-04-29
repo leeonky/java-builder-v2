@@ -21,8 +21,8 @@ class BeanProducers {
         this.producer = producer;
         beanFactory.getPropertyWriters()
                 .forEach((name, propertyWriter) ->
-                        ValueFactories.of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
-                                add(name, new ValueFactoryProducer<>(fieldFactory, argument.newProperty(name)))));
+                        factorySet.getValueFactories().of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
+                                add(name, new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))));
         BeanSpec beanSpec = new BeanSpec(this, factorySet, argument);
         beanFactory.collectSpec(argument, beanSpec);
         typeMixIn.accept(argument, beanSpec);

@@ -10,51 +10,51 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-class ValueFactories {
+public class ValueFactories {
     private static final LocalDate LOCAL_DATE_START = LocalDate.parse("1996-01-23");
     private static final LocalDateTime LOCAL_DATE_TIME_START = LocalDateTime.parse("1996-01-23T00:00:00");
     private static final LocalTime LOCAL_TIME_START = LocalTime.parse("00:00:00");
     private static final Instant INSTANT_START = Instant.parse("1996-01-23T00:00:00Z");
-    private static final Map<Class<?>, BeanFactory<?>> buildIns = new HashMap<Class<?>, BeanFactory<?>>() {{
+    private final Map<Class<?>, Factory<?>> buildIns = new HashMap<Class<?>, Factory<?>>() {{
         put(Byte.class, new ValueFactory<Byte>() {
             @Override
-            public Byte create(Argument argument) {
+            protected Byte newInstance(Argument argument) {
                 return (byte) argument.getSequence();
             }
         });
         put(Short.class, new ValueFactory<Short>() {
             @Override
-            public Short create(Argument argument) {
+            protected Short newInstance(Argument argument) {
                 return (short) argument.getSequence();
             }
         });
         put(Integer.class, new ValueFactory<Integer>() {
             @Override
-            public Integer create(Argument argument) {
+            protected Integer newInstance(Argument argument) {
                 return argument.getSequence();
             }
         });
         put(Long.class, new ValueFactory<Long>() {
             @Override
-            public Long create(Argument argument) {
+            protected Long newInstance(Argument argument) {
                 return (long) argument.getSequence();
             }
         });
         put(Float.class, new ValueFactory<Float>() {
             @Override
-            public Float create(Argument argument) {
+            protected Float newInstance(Argument argument) {
                 return (float) argument.getSequence();
             }
         });
         put(Double.class, new ValueFactory<Double>() {
             @Override
-            public Double create(Argument argument) {
+            protected Double newInstance(Argument argument) {
                 return (double) argument.getSequence();
             }
         });
         put(Boolean.class, new ValueFactory<Boolean>() {
             @Override
-            public Boolean create(Argument argument) {
+            protected Boolean newInstance(Argument argument) {
                 return argument.getSequence() % 2 == 1;
             }
         });
@@ -73,72 +73,72 @@ class ValueFactories {
         });
         put(BigInteger.class, new ValueFactory<BigInteger>() {
             @Override
-            public BigInteger create(Argument argument) {
+            protected BigInteger newInstance(Argument argument) {
                 return BigInteger.valueOf(argument.getSequence());
             }
         });
         put(BigDecimal.class, new ValueFactory<BigDecimal>() {
             @Override
-            public BigDecimal create(Argument argument) {
+            protected BigDecimal newInstance(Argument argument) {
                 return BigDecimal.valueOf(argument.getSequence());
             }
         });
         put(UUID.class, new ValueFactory<UUID>() {
             @Override
-            public UUID create(Argument argument) {
+            protected UUID newInstance(Argument argument) {
                 return UUID.fromString(String.format("00000000-0000-0000-0000-%012d", argument.getSequence()));
             }
         });
         put(Instant.class, new ValueFactory<Instant>() {
             @Override
-            public Instant create(Argument argument) {
+            public Instant newInstance(Argument argument) {
                 return INSTANT_START.plusSeconds(argument.getSequence());
             }
         });
         put(Date.class, new ValueFactory<Date>() {
             @Override
-            public Date create(Argument argument) {
+            protected Date newInstance(Argument argument) {
                 return Date.from(INSTANT_START.plus(argument.getSequence(), ChronoUnit.DAYS));
             }
         });
         put(LocalTime.class, new ValueFactory<LocalTime>() {
             @Override
-            public LocalTime create(Argument argument) {
+            protected LocalTime newInstance(Argument argument) {
                 return LOCAL_TIME_START.plusSeconds(argument.getSequence());
             }
         });
         put(LocalDate.class, new ValueFactory<LocalDate>() {
             @Override
-            public LocalDate create(Argument argument) {
+            protected LocalDate newInstance(Argument argument) {
                 return LOCAL_DATE_START.plusDays(argument.getSequence());
             }
         });
         put(LocalDateTime.class, new ValueFactory<LocalDateTime>() {
             @Override
-            public LocalDateTime create(Argument argument) {
+            protected LocalDateTime newInstance(Argument argument) {
                 return LOCAL_DATE_TIME_START.plusSeconds(argument.getSequence());
             }
         });
         put(OffsetDateTime.class, new ValueFactory<OffsetDateTime>() {
             @Override
-            public OffsetDateTime create(Argument argument) {
+            protected OffsetDateTime newInstance(Argument argument) {
                 return INSTANT_START.plusSeconds(argument.getSequence()).atZone(ZoneId.systemDefault()).toOffsetDateTime();
             }
         });
         put(ZonedDateTime.class, new ValueFactory<ZonedDateTime>() {
             @Override
-            public ZonedDateTime create(Argument argument) {
+            protected ZonedDateTime newInstance(Argument argument) {
                 return INSTANT_START.plusSeconds(argument.getSequence()).atZone(ZoneId.systemDefault());
             }
         });
     }};
 
     @SuppressWarnings("unchecked")
-    public static <T> Optional<BeanFactory<T>> of(Class<T> type) {
+    public <T> Optional<BeanFactory<T>> of(Class<T> type) {
         return Optional.ofNullable((BeanFactory<T>) buildIns.get(type));
     }
 
-    private static class ValueFactory<T> extends BeanFactory<T> {
+    public static class ValueFactory<T> extends BeanFactory<T> {
         ValueFactory() {
             super(null);
         }

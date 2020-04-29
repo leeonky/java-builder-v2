@@ -13,6 +13,7 @@ public class FactorySet {
     private final Map<Class<?>, CustomizedFactory<?>> customizedFactoryInType = new HashMap<>();
     private final Map<String, CustomizedFactory<?>> customizedFactoryInName = new HashMap<>();
     private final DataRepository dataRepository;
+    private final ValueFactories valueFactories = new ValueFactories();
 
     public FactorySet(DataRepository dataRepository) {
         this.dataRepository = Objects.requireNonNull(dataRepository);
@@ -22,13 +23,21 @@ public class FactorySet {
         dataRepository = new HashMapDataRepository();
     }
 
+    public ValueFactories getValueFactories() {
+        return valueFactories;
+    }
+
+    private <T> BeanFactory<T> createFactory(Class<T> type) {
+        return valueFactories.of(type).orElseGet(() -> new BeanFactory<>(BeanClass.create(type)));
+    }
+
     public <T> Builder<T> type(Class<T> type) {
         return new Builder<>(this, queryObjectFactory(type));
     }
 
     @SuppressWarnings("unchecked")
     private <T> BeanFactory<T> queryObjectFactory(Class<T> type) {
-        return (BeanFactory<T>) beanFactories.computeIfAbsent(type, BeanFactory::create);
+        return (BeanFactory<T>) beanFactories.computeIfAbsent(type, this::createFactory);
     }
 
     <T> int getSequence(BeanClass<T> type) {
