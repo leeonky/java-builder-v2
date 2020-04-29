@@ -15,6 +15,7 @@ class CustomizedFactory<T> extends BeanFactory<T> {
         this.base = base;
         this.definition = definition;
         registerMixIns();
+        construct(base::create);
     }
 
     private void registerMixIns() {
@@ -31,11 +32,6 @@ class CustomizedFactory<T> extends BeanFactory<T> {
                         throw new IllegalStateException(e);
                     }
                 }));
-    }
-
-    @Override
-    protected T newInstance(Argument argument) {
-        return base.create(argument);
     }
 
     @Override

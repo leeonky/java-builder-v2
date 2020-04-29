@@ -44,23 +44,23 @@ public class BeanSpec implements Spec {
         }
 
         public <T> void from(Class<? extends Definition<T>> definition) {
-            addProducer(factorySet.toBuild(definition).params(argument.getParams()).producer(property));
+            addProducer(factorySet.toBuild(definition).params(argument.allParams()).producer(property));
         }
 
         public <T> void from(Class<? extends Definition<T>> definition, Function<Builder<T>, Builder<T>> builder) {
-            addProducer(builder.apply(factorySet.toBuild(definition).params(argument.getParams())).producer(property));
+            addProducer(builder.apply(factorySet.toBuild(definition).params(argument.allParams())).producer(property));
         }
 
         public <T, D extends Definition<T>> void fromMixIn(Class<D> definition, Consumer<D> mixIn) {
-            addProducer(factorySet.toBuild(definition, mixIn).params(argument.getParams()).producer(property));
+            addProducer(factorySet.toBuild(definition, mixIn).params(argument.allParams()).producer(property));
         }
 
         public void type(Class<?> type) {
-            addProducer(factorySet.type(type).params(argument.getParams()).producer(property));
+            addProducer(factorySet.type(type).params(argument.allParams()).producer(property));
         }
 
         public <T> void type(Class<T> type, Function<Builder<T>, Builder<T>> builder) {
-            addProducer(builder.apply(factorySet.type(type).params(argument.getParams())).producer(property));
+            addProducer(builder.apply(factorySet.type(type).params(argument.allParams())).producer(property));
         }
 
         public void supplier(Supplier<?> supplier) {

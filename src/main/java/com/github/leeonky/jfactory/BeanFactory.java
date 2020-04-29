@@ -13,16 +13,12 @@ import java.util.function.Function;
 class BeanFactory<T> implements Factory<T> {
     private final BeanClass<T> type;
     private final Map<String, BiConsumer<Argument, Spec>> mixIns = new HashMap<>();
-    private Function<Argument, T> constructor = this::newInstance;
+    private Function<Argument, T> constructor = argument -> getType().newInstance();
     private BiConsumer<Argument, Spec> definition = (arg, spec) -> {
     };
 
     public BeanFactory(BeanClass<T> type) {
         this.type = type;
-    }
-
-    protected T newInstance(Argument argument) {
-        return getType().newInstance();
     }
 
     public final T create(Argument argument) {

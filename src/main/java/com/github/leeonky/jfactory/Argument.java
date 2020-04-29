@@ -29,17 +29,17 @@ public class Argument {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T param(String p) {
-        return (T) params.get(p);
+    public <T> T param(String name) {
+        return (T) params.get(name);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T param(String p, T defaultValue) {
-        return (T) params.getOrDefault(p, defaultValue);
+    public <T> T param(String name, T defaultValue) {
+        return (T) params.getOrDefault(name, defaultValue);
     }
 
-    public Map<String, Object> getParams() {
-        return params;
+    public Map<String, Object> allParams() {
+        return new HashMap<>(params);
     }
 
     Argument forNested(String property) {
