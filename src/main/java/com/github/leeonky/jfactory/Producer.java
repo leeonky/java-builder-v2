@@ -29,7 +29,7 @@ public abstract class Producer<T> {
         return producer;
     }
 
-    protected Producer<T> changeFrom(BeanFactoryProducer<T> beanFactoryProducer) {
+    protected Producer<T> changeFrom(Builder<T>.BeanFactoryProducer beanFactoryProducer) {
         return this;
     }
 
@@ -52,11 +52,11 @@ public abstract class Producer<T> {
     }
 
     public <T> void addDependency(List<Object> property, List<List<Object>> dependencies, Function<List<Object>, T> rule) {
-        throw new IllegalStateException(String.format("Only %s support add dependencies", BeanFactoryProducer.class.getName()));
+        throw new IllegalStateException(String.format("Only %s support add dependencies", Builder.BeanFactoryProducer.class.getName()));
     }
 
     public ProducerRef<?> getByIndexes(List<Object> property) {
-        throw new IllegalStateException(String.format("Only %s support query sub ProducerRef", BeanFactoryProducer.class.getName()));
+        throw new IllegalStateException(String.format("Only %s support query sub ProducerRef", Builder.BeanFactoryProducer.class.getName()));
     }
 
     public Producer<?> getParent() {
@@ -69,6 +69,6 @@ public abstract class Producer<T> {
     }
 
     public void changeByIndexes(List<Object> property, Producer<?> producer) {
-        throw new IllegalStateException(String.format("Only %s support query sub ProducerRef", BeanFactoryProducer.class.getName()));
+        throw new IllegalStateException(String.format("Only %s support query sub ProducerRef", Builder.BeanFactoryProducer.class.getName()));
     }
 }

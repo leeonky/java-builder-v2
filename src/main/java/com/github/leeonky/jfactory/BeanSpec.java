@@ -8,20 +8,20 @@ import java.util.function.Supplier;
 
 import static java.util.Collections.singletonList;
 
-public class BeanSpec implements Spec {
-    private final Builder<?>.BeanProducers beanProducers;
+class BeanSpec implements Spec {
+    private final Builder<?>.BeanFactoryProducer beanFactoryProducer;
     private final FactorySet factorySet;
     private final Argument argument;
 
-    public BeanSpec(Builder<?>.BeanProducers beanProducers, FactorySet factorySet, Argument argument) {
-        this.beanProducers = beanProducers;
+    public BeanSpec(Builder<?>.BeanFactoryProducer beanFactoryProducer, FactorySet factorySet, Argument argument) {
+        this.beanFactoryProducer = beanFactoryProducer;
         this.factorySet = factorySet;
         this.argument = argument;
     }
 
     @Override
     public PropertySpec property(String property) {
-        String[] propertyAndIndex = property.split("\\[|\\]");
+        String[] propertyAndIndex = property.split("[\\[\\]]");
         if (propertyAndIndex.length > 1)
             return new CollectionElementSpec(propertyAndIndex[0], Integer.valueOf(propertyAndIndex[1]));
         return new PropertySpec(property);
@@ -40,7 +40,7 @@ public class BeanSpec implements Spec {
         }
 
         protected void addProducer(Producer<?> producer) {
-            beanProducers.add(property, producer);
+            beanFactoryProducer.add(property, producer);
         }
 
         public <T> void from(Class<? extends Definition<T>> definition) {
@@ -68,7 +68,7 @@ public class BeanSpec implements Spec {
         }
 
         public void dependsOn(String property, Function<Object, Object> dependency) {
-            List<Object> beanIndexes = beanProducers.getProducer().getIndexes();
+            List<Object> beanIndexes = beanFactoryProducer.getIndexes();
 
             List<Object> propertyIndexChain = new ArrayList<>(beanIndexes);
             propertyIndexChain.add(this.property);
@@ -76,7 +76,7 @@ public class BeanSpec implements Spec {
             List<Object> dependencyIndexChain = new ArrayList<>(beanIndexes);
             dependencyIndexChain.add(property);
 
-            beanProducers.getProducer().getRoot()
+            beanFactoryProducer.getRoot()
                     .addDependency(propertyIndexChain, singletonList(dependencyIndexChain), (deps) -> dependency.apply(deps.get(0)));
         }
     }
@@ -92,8 +92,8 @@ public class BeanSpec implements Spec {
 
         @Override
         protected void addProducer(Producer<?> producer) {
-            ((CollectionProducer<?>) beanProducers.getOrAdd(property, () ->
-                    new CollectionProducer<>(beanProducers.getType().getPropertyWriter(property).getPropertyTypeWrapper())))
+            ((CollectionProducer<?>) beanFactoryProducer.getOrAdd(property, () ->
+                    new CollectionProducer<>(beanFactoryProducer.getType().getPropertyWriter(property).getPropertyTypeWrapper())))
                     .setElementProducer(index, producer);
         }
 

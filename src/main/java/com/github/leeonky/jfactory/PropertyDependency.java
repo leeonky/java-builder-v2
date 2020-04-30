@@ -16,7 +16,7 @@ class PropertyDependency<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public void processDependency(BeanFactoryProducer<?> producer) {
+    public void processDependency(Producer<?> producer) {
         ProducerRef<?> producerRef = producer.getByIndexes(property);
         if (producerRef == null) {
             producer.changeByIndexes(property, new DependencyProducer(

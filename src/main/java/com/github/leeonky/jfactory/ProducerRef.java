@@ -27,7 +27,7 @@ class ProducerRef<T> {
     }
 
     public boolean isBeanFactoryProducer() {
-        return producer instanceof BeanFactoryProducer;
+        return producer instanceof Builder.BeanFactoryProducer;
     }
 
     public T produce() {

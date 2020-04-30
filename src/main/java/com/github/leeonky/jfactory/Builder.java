@@ -4,9 +4,10 @@ import com.github.leeonky.util.BeanClass;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import static com.github.leeonky.jfactory.Producer.collectChildren;
 import static java.util.Arrays.asList;
 
 public class Builder<T> {
@@ -30,8 +31,8 @@ public class Builder<T> {
         return object;
     }
 
-    BeanFactoryProducer<T> producer(String property) {
-        return new BeanFactoryProducer<>(factorySet, beanFactory, new Argument(property, factorySet.getSequence(beanFactory.getType()), params), this);
+    BeanFactoryProducer producer(String property) {
+        return new BeanFactoryProducer(new Argument(property, factorySet.getSequence(beanFactory.getType()), params));
     }
 
     public T query() {
@@ -95,12 +96,6 @@ public class Builder<T> {
         return newBuilder;
     }
 
-    Builder<T> specs(Map<String, BiConsumer<Argument, BeanSpec.PropertySpec>> propertySpecs) {
-        Builder<T> newBuilder = copy();
-        newBuilder.propertySpecs.putAll(propertySpecs);
-        return newBuilder;
-    }
-
     public Builder<T> baseOn(Builder<T> base) {
         Builder<T> newBuilder = base.copy();
         newBuilder.propertySpecs.putAll(propertySpecs);
@@ -108,14 +103,15 @@ public class Builder<T> {
         return newBuilder;
     }
 
-    class BeanProducers {
+    class BeanFactoryProducer extends Producer<T> {
         private final Map<String, ProducerRef<?>> propertyProducerRefs = new LinkedHashMap<>();
         private final BeanClass type;
-        private final BeanFactoryProducer<?> producer;
+        private final Argument argument;
+        private Map<List<Object>, PropertyDependency<?>> dependencies = new LinkedHashMap<>();
 
-        public BeanProducers(Argument argument, BeanFactoryProducer<T> producer) {
+        public BeanFactoryProducer(Argument argument) {
+            this.argument = argument;
             type = beanFactory.getType();
-            this.producer = producer;
             beanFactory.getPropertyWriters()
                     .forEach((name, propertyWriter) ->
                             factorySet.getValueFactories().of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
@@ -129,23 +125,25 @@ public class Builder<T> {
                     .forEach(exp -> exp.queryOrCreateNested(factorySet, this));
         }
 
-        public Producer<?> getProducer() {
-            return producer;
-        }
-
         @SuppressWarnings("unchecked")
         public void add(String property, Producer<?> producer) {
             propertyProducerRefs.computeIfAbsent(property, k -> new ProducerRef<>(new ValueProducer<>(() -> null)))
                     .changeProducer((Producer) producer);
-            producer.setParent(this.producer);
+            producer.setParent(this);
         }
 
+        @Override
         @SuppressWarnings("unchecked")
-        public void produce(Object data) {
-            propertyProducerRefs.forEach((k, v) -> type.setPropertyValue(data, k, v.produce()));
+        public T produce() {
+            T value = beanFactory.create(argument);
+            argument.setCurrent(value);
+            propertyProducerRefs.forEach((k, v) -> type.setPropertyValue(value, k, v.produce()));
+            factorySet.getDataRepository().save(value);
+            return value;
         }
 
-        public Collection<ProducerRef<?>> getProducers() {
+        @Override
+        protected Collection<ProducerRef<?>> getChildren() {
             return collectChildren(propertyProducerRefs.values());
         }
 
@@ -172,6 +170,7 @@ public class Builder<T> {
             return producer;
         }
 
+        @Override
         public Object indexOf(Producer<?> sub) {
             for (Map.Entry<String, ProducerRef<?>> e : propertyProducerRefs.entrySet())
                 if (Objects.equals(e.getValue().get(), sub))
@@ -191,8 +190,8 @@ public class Builder<T> {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof Builder.BeanProducers) {
-                Builder.BeanProducers another = (Builder.BeanProducers) obj;
+            if (obj instanceof Builder.BeanFactoryProducer) {
+                Builder.BeanFactoryProducer another = (Builder.BeanFactoryProducer) obj;
                 return Objects.equals(beanFactory, another.builder().beanFactory)
                         && Objects.equals(mixIns, another.builder().mixIns)
                         && Objects.equals(typeMixIn, another.builder().typeMixIn)
@@ -201,6 +200,60 @@ public class Builder<T> {
                         ;
             }
             return super.equals(obj);
+        }
+
+        @Override
+        public ProducerRef<?> getByIndexes(List<Object> property) {
+            LinkedList<Object> leftProperty = new LinkedList<>(property);
+            ProducerRef<?> producerRef = getProducerRef((String) leftProperty.removeFirst());
+            if (leftProperty.isEmpty())
+                return producerRef;
+            else
+                return producerRef.get().getByIndexes(leftProperty);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void changeByIndexes(List<Object> property, Producer<?> producer) {
+            LinkedList<Object> leftProperty = new LinkedList<>(property);
+            String p = (String) leftProperty.removeFirst();
+            ProducerRef producerRef = getProducerRef(p);
+            if (leftProperty.isEmpty()) {
+                if (producerRef == null)
+                    add(p, producer);
+                else
+                    producerRef.changeProducer(producer);
+            } else
+                producerRef.get().changeByIndexes(property, producer);
+        }
+
+
+        @Override
+        public Producer<T> changeTo(Producer<T> producer) {
+            return producer.changeFrom(this);
+        }
+
+        @Override
+        protected Producer<T> changeFrom(BeanFactoryProducer beanFactoryProducer) {
+            if (beanFactory instanceof CustomizedFactory)
+                return this;
+            return builder().baseOn(beanFactoryProducer.builder()).new BeanFactoryProducer(argument);
+        }
+
+        @Override
+        public <T> void addDependency(List<Object> property, List<List<Object>> dependencies, Function<List<Object>, T> rule) {
+            this.dependencies.put(property, new PropertyDependency<>(property, dependencies, rule));
+        }
+
+        @SuppressWarnings("unchecked")
+        public Producer<T> processSpec() {
+            dependencies.values().forEach(propertyDependency -> propertyDependency.processDependency(this));
+
+            getChildren().stream()
+                    .filter(ProducerRef::isBeanFactoryProducer)
+                    .collect(Collectors.groupingBy(Function.identity()))
+                    .forEach((_ignore, refs) -> refs.stream().reduce((r1, r2) -> r1.link((ProducerRef) r2)));
+            return this;
         }
     }
 }
