@@ -35,7 +35,7 @@ class CustomizedFactory<T> extends BeanFactory<T> {
     }
 
     @Override
-    public void collectSpec(Argument arg, BeanSpec spec) {
+    public void collectSpec(Argument arg, BeanSpec<T> spec) {
         base.collectSpec(arg, spec);
         BeanClass.newInstance(definition).setContext(arg, spec).define();
         super.collectSpec(arg, spec);

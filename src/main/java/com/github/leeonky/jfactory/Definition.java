@@ -3,10 +3,10 @@ package com.github.leeonky.jfactory;
 import com.github.leeonky.util.GenericType;
 
 public abstract class Definition<T> {
-    private Spec spec;
+    private Spec<T> spec;
     private Argument argument;
 
-    public Spec spec() {
+    public Spec<T> spec() {
         return spec;
     }
 
@@ -14,7 +14,7 @@ public abstract class Definition<T> {
         return argument;
     }
 
-    public Definition<T> setContext(Argument argument, Spec spec) {
+    public Definition<T> setContext(Argument argument, Spec<T> spec) {
         this.argument = argument;
         this.spec = spec;
         return this;

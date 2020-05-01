@@ -1,7 +1,5 @@
 package com.github.leeonky.jfactory;
 
-import com.github.leeonky.util.BeanClass;
-
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -12,12 +10,12 @@ import static java.util.Arrays.asList;
 
 public class Builder<T> {
     private final Map<String, Object> properties = new LinkedHashMap<>();
-    private final Map<String, BiConsumer<Argument, BeanSpec.PropertySpec>> propertySpecs = new LinkedHashMap<>();
+    private final Map<String, BiConsumer<Argument, BeanSpec<T>.PropertySpec>> propertySpecs = new LinkedHashMap<>();
     private final FactorySet factorySet;
     private final BeanFactory<T> beanFactory;
     private final Map<String, Object> params = new HashMap<>();
     private final List<String> mixIns = new ArrayList<>();
-    private BiConsumer<Argument, Spec> typeMixIn = (arg, spec) -> {
+    private BiConsumer<Argument, Spec<T>> typeMixIn = (arg, spec) -> {
     };
 
     Builder(FactorySet factorySet, BeanFactory<T> beanFactory) {
@@ -84,19 +82,19 @@ public class Builder<T> {
         return newBuilder;
     }
 
-    Builder<T> mixIn(BiConsumer<Argument, Spec> mixIn) {
+    Builder<T> mixIn(BiConsumer<Argument, Spec<T>> mixIn) {
         Builder<T> newBuilder = copy();
         newBuilder.typeMixIn = mixIn;
         return newBuilder;
     }
 
-    public Builder<T> spec(String property, BiConsumer<Argument, BeanSpec.PropertySpec> propertySpec) {
+    public Builder<T> spec(String property, BiConsumer<Argument, BeanSpec<T>.PropertySpec> propertySpec) {
         Builder<T> newBuilder = copy();
         newBuilder.propertySpecs.put(property, propertySpec);
         return newBuilder;
     }
 
-    public Builder<T> baseOn(Builder<T> base) {
+    private Builder<T> baseOn(Builder<T> base) {
         Builder<T> newBuilder = base.copy();
         newBuilder.propertySpecs.putAll(propertySpecs);
         newBuilder.properties.putAll(properties);
@@ -105,18 +103,16 @@ public class Builder<T> {
 
     class BeanFactoryProducer extends Producer<T> {
         private final Map<String, ProducerRef<?>> propertyProducerRefs = new LinkedHashMap<>();
-        private final BeanClass type;
         private final Argument argument;
         private Map<List<Object>, PropertyDependency<?>> dependencies = new LinkedHashMap<>();
 
         public BeanFactoryProducer(Argument argument) {
             this.argument = argument;
-            type = beanFactory.getType();
             beanFactory.getPropertyWriters()
                     .forEach((name, propertyWriter) ->
                             factorySet.getValueFactories().of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
                                     add(name, new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))));
-            BeanSpec beanSpec = new BeanSpec(this, factorySet, argument);
+            BeanSpec<T> beanSpec = new BeanSpec<>(this, factorySet, argument);
             beanFactory.collectSpec(argument, beanSpec);
             typeMixIn.accept(argument, beanSpec);
             beanFactory.collectMixInSpecs(argument, mixIns, beanSpec);
@@ -133,11 +129,10 @@ public class Builder<T> {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public T produce() {
             T value = beanFactory.create(argument);
             argument.setCurrent(value);
-            propertyProducerRefs.forEach((k, v) -> type.setPropertyValue(value, k, v.produce()));
+            propertyProducerRefs.forEach((k, v) -> beanFactory.getType().setPropertyValue(value, k, v.produce()));
             factorySet.getDataRepository().save(value);
             return value;
         }
@@ -145,10 +140,6 @@ public class Builder<T> {
         @Override
         protected Collection<ProducerRef<?>> getChildren() {
             return collectChildren(propertyProducerRefs.values());
-        }
-
-        public BeanClass<?> getType() {
-            return type;
         }
 
         private Producer<?> getProducer(String property) {
@@ -254,6 +245,26 @@ public class Builder<T> {
                     .collect(Collectors.groupingBy(Function.identity()))
                     .forEach((_ignore, refs) -> refs.stream().reduce((r1, r2) -> r1.link((ProducerRef) r2)));
             return this;
+        }
+
+        public void addDependency(String property1, String[] properties, Function<Object[], Object> dependency) {
+            List<Object> beanIndexes = getIndexes();
+
+            List<Object> propertyIndexChain = new ArrayList<>(beanIndexes);
+            propertyIndexChain.add(property1);
+
+            List<List<Object>> dependencyIndexChains = Arrays.stream(properties).map(property -> {
+                List<Object> dependencyIndexChain = new ArrayList<>(beanIndexes);
+                dependencyIndexChain.add(property);
+                return dependencyIndexChain;
+            }).collect(Collectors.toList());
+
+            getRoot().addDependency(propertyIndexChain, dependencyIndexChains, deps -> dependency.apply(deps.toArray()));
+        }
+
+        public CollectionProducer<?> getOrAddCollectionProducer(String property) {
+            return (CollectionProducer<?>) getOrAdd(property, () ->
+                    new CollectionProducer<>(beanFactory.getType().getPropertyWriter(property).getPropertyTypeWrapper()));
         }
     }
 }

@@ -38,5 +38,16 @@ class _08_DependencyAndLink {
             assertThat(factorySet.type(Beans.class).property("bean2", bean2).create())
                     .hasFieldOrPropertyWithValue("bean1", bean2);
         }
+
+        @Test
+        void list_dependency_in_same_level() {
+            factorySet.factory(Beans.class).define((argument, spec) -> {
+                spec.property("bean1").dependsOn(new String[]{"bean2"}, objs -> objs[0]);
+            });
+            Bean bean2 = new Bean();
+
+            assertThat(factorySet.type(Beans.class).property("bean2", bean2).create())
+                    .hasFieldOrPropertyWithValue("bean1", bean2);
+        }
     }
 }
