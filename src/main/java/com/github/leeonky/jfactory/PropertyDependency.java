@@ -17,15 +17,15 @@ class PropertyDependency<T> {
 
     @SuppressWarnings("unchecked")
     public void processDependency(Producer<?> producer) {
-        ProducerRef<?> producerRef = producer.getByIndexes(property);
-        if (producerRef == null) {
-            producer.changeByIndexes(property, new DependencyProducer(
-                    dependencies.stream().map(producer::getByIndexes).collect(Collectors.toList()),
+        Producer.Handler<?> handler = producer.getByIndex(property);
+        if (handler == null) {
+            producer.changeByIndex(property, new DependencyProducer(
+                    dependencies.stream().map(producer::getByIndex).collect(Collectors.toList()),
                     rule
             ));
         } else
-            producerRef.changeProducer(new DependencyProducer(
-                    dependencies.stream().map(producer::getByIndexes).collect(Collectors.toList()),
+            handler.changeProducer(new DependencyProducer(
+                    dependencies.stream().map(producer::getByIndex).collect(Collectors.toList()),
                     rule
             ));
     }

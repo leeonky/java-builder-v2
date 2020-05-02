@@ -74,7 +74,7 @@ class QueryExpression<T> {
     }
 
     public void queryOrCreateNested(FactorySet factorySet, Builder<T>.BeanFactoryProducer beanFactoryProducer) {
-        beanFactoryProducer.add(property, conditionValue.buildProducer(factorySet));
+        beanFactoryProducer.addProperty(property, conditionValue.buildProducer(factorySet));
     }
 
     private abstract class ConditionValue {

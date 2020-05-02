@@ -1,7 +1,7 @@
 package com.github.leeonky.jfactory;
 
 import com.github.leeonky.util.BeanClass;
-import com.github.leeonky.util.PropertyWriter;
+import com.github.leeonky.util.Property;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,14 +22,16 @@ class BeanFactory<T> implements Factory<T> {
     }
 
     public final T create(Argument argument) {
-        return constructor.apply(argument);
+        T value = constructor.apply(argument);
+        argument.setCurrent(value);
+        return value;
     }
 
     public BeanClass<T> getType() {
         return type;
     }
 
-    public Map<String, PropertyWriter<T>> getPropertyWriters() {
+    public Map<String, ? extends Property<T>> getProperties() {
         return type.getPropertyWriters();
     }
 

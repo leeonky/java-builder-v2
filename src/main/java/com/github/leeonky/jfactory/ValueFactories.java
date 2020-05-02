@@ -1,7 +1,7 @@
 package com.github.leeonky.jfactory;
 
 import com.github.leeonky.util.BeanClass;
-import com.github.leeonky.util.PropertyWriter;
+import com.github.leeonky.util.Property;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -69,7 +69,7 @@ public class ValueFactories {
         }
 
         @Override
-        public Map<String, PropertyWriter<T>> getPropertyWriters() {
+        public Map<String, ? extends Property<T>> getProperties() {
             return Collections.emptyMap();
         }
     }

@@ -3,7 +3,6 @@ package com.github.leeonky.jfactory;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -94,76 +93,55 @@ public class Builder<T> {
         return newBuilder;
     }
 
-    private Builder<T> baseOn(Builder<T> base) {
-        Builder<T> newBuilder = base.copy();
-        newBuilder.propertySpecs.putAll(propertySpecs);
-        newBuilder.properties.putAll(properties);
-        return newBuilder;
-    }
-
     class BeanFactoryProducer extends Producer<T> {
-        private final Map<String, ProducerRef<?>> propertyProducerRefs = new LinkedHashMap<>();
+        private final Map<String, Handler<?>> propertyProducerRefs = new LinkedHashMap<>();
         private final Argument argument;
         private Map<List<Object>, PropertyDependency<?>> dependencies = new LinkedHashMap<>();
 
         public BeanFactoryProducer(Argument argument) {
             this.argument = argument;
-            beanFactory.getPropertyWriters()
-                    .forEach((name, propertyWriter) ->
-                            factorySet.getValueFactories().of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
-                                    add(name, new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))));
-            BeanSpec<T> beanSpec = new BeanSpec<>(this, factorySet, argument);
-            beanFactory.collectSpec(argument, beanSpec);
-            typeMixIn.accept(argument, beanSpec);
-            beanFactory.collectMixInSpecs(argument, mixIns, beanSpec);
-            propertySpecs.forEach((property, spec) -> spec.accept(argument, beanSpec.property(property)));
+            collectPropertyDefaultProducer(argument);
+            collectSpecs(argument, new BeanSpec<>(this, factorySet, argument));
             QueryExpression.createQueryExpressions(beanFactory.getType(), properties)
                     .forEach(exp -> exp.queryOrCreateNested(factorySet, this));
         }
 
+        private void collectSpecs(Argument argument, BeanSpec<T> beanSpec) {
+            beanFactory.collectSpec(argument, beanSpec);
+            typeMixIn.accept(argument, beanSpec);
+            beanFactory.collectMixInSpecs(argument, mixIns, beanSpec);
+            propertySpecs.forEach((property, spec) -> spec.accept(argument, beanSpec.property(property)));
+        }
+
+        private void collectPropertyDefaultProducer(Argument argument) {
+            beanFactory.getProperties().forEach((name, propertyWriter) ->
+                    factorySet.getValueFactories().of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
+                            addProperty(name, new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))));
+        }
+
         @SuppressWarnings("unchecked")
-        public void add(String property, Producer<?> producer) {
-            propertyProducerRefs.computeIfAbsent(property, k -> new ProducerRef<>(new ValueProducer<>(() -> null)))
+        public <P extends Producer<?>> P addProperty(String property, P producer) {
+            propertyProducerRefs.computeIfAbsent(property, k -> new Handler<>(new ValueProducer<>(() -> null)))
                     .changeProducer((Producer) producer);
-            producer.setParent(this);
+            return (P) producer.setParent(this);
         }
 
         @Override
         public T produce() {
             T value = beanFactory.create(argument);
-            argument.setCurrent(value);
             propertyProducerRefs.forEach((k, v) -> beanFactory.getType().setPropertyValue(value, k, v.produce()));
             factorySet.getDataRepository().save(value);
             return value;
         }
 
         @Override
-        protected Collection<ProducerRef<?>> getChildren() {
+        protected Collection<Handler<?>> getChildren() {
             return collectChildren(propertyProducerRefs.values());
-        }
-
-        private Producer<?> getProducer(String property) {
-            ProducerRef<?> producerRef = propertyProducerRefs.get(property);
-            if (producerRef == null)
-                return null;
-            else
-                return producerRef.get();
-        }
-
-        public ProducerRef<?> getProducerRef(String property) {
-            return propertyProducerRefs.get(property);
-        }
-
-        public Producer<?> getOrAdd(String property, Supplier<Producer<?>> supplier) {
-            Producer<?> producer = getProducer(property);
-            if (producer == null)
-                add(property, producer = supplier.get());
-            return producer;
         }
 
         @Override
         public Object indexOf(Producer<?> sub) {
-            for (Map.Entry<String, ProducerRef<?>> e : propertyProducerRefs.entrySet())
+            for (Map.Entry<String, Handler<?>> e : propertyProducerRefs.entrySet())
                 if (Objects.equals(e.getValue().get(), sub))
                     return e.getKey();
             throw new IllegalStateException();
@@ -175,47 +153,43 @@ public class Builder<T> {
                     beanFactory.hashCode(), mixIns.hashCode(), properties.hashCode(), typeMixIn.hashCode(), propertySpecs.hashCode()).hashCode();
         }
 
-        Builder<T> builder() {
-            return Builder.this;
+        private boolean equalsWithBuilder(Builder<?> builder) {
+            return Objects.equals(beanFactory, builder.beanFactory)
+                    && Objects.equals(mixIns, builder.mixIns)
+                    && Objects.equals(typeMixIn, builder.typeMixIn)
+                    && Objects.equals(properties, builder.properties)
+                    && Objects.equals(propertySpecs, builder.propertySpecs);
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof Builder.BeanFactoryProducer) {
-                Builder.BeanFactoryProducer another = (Builder.BeanFactoryProducer) obj;
-                return Objects.equals(beanFactory, another.builder().beanFactory)
-                        && Objects.equals(mixIns, another.builder().mixIns)
-                        && Objects.equals(typeMixIn, another.builder().typeMixIn)
-                        && Objects.equals(properties, another.builder().properties)
-                        && Objects.equals(propertySpecs, another.builder().propertySpecs)
-                        ;
-            }
-            return super.equals(obj);
+            return obj instanceof Builder.BeanFactoryProducer ?
+                    ((Builder<?>.BeanFactoryProducer) obj).equalsWithBuilder(Builder.this) : super.equals(obj);
         }
 
         @Override
-        public ProducerRef<?> getByIndexes(List<Object> property) {
-            LinkedList<Object> leftProperty = new LinkedList<>(property);
-            ProducerRef<?> producerRef = getProducerRef((String) leftProperty.removeFirst());
+        public Handler<?> getByIndex(List<Object> index) {
+            LinkedList<Object> leftProperty = new LinkedList<>(index);
+            Handler<?> handler = propertyProducerRefs.get(leftProperty.removeFirst());
             if (leftProperty.isEmpty())
-                return producerRef;
+                return handler;
             else
-                return producerRef.get().getByIndexes(leftProperty);
+                return handler.get().getByIndex(leftProperty);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public void changeByIndexes(List<Object> property, Producer<?> producer) {
-            LinkedList<Object> leftProperty = new LinkedList<>(property);
+        public void changeByIndex(List<Object> index, Producer<?> producer) {
+            LinkedList<Object> leftProperty = new LinkedList<>(index);
             String p = (String) leftProperty.removeFirst();
-            ProducerRef producerRef = getProducerRef(p);
+            Handler handler = propertyProducerRefs.get(p);
             if (leftProperty.isEmpty()) {
-                if (producerRef == null)
-                    add(p, producer);
+                if (handler == null)
+                    addProperty(p, producer);
                 else
-                    producerRef.changeProducer(producer);
+                    handler.changeProducer(producer);
             } else
-                producerRef.get().changeByIndexes(property, producer);
+                handler.get().changeByIndex(index, producer);
         }
 
 
@@ -224,16 +198,18 @@ public class Builder<T> {
             return producer.changeFrom(this);
         }
 
+        private BeanFactoryProducer useSpecInDefinition(Builder<T> builderInProperty, Argument argument) {
+            Builder<T> newBuilder = copy();
+            newBuilder.propertySpecs.putAll(builderInProperty.propertySpecs);
+            newBuilder.properties.putAll(builderInProperty.properties);
+            return newBuilder.new BeanFactoryProducer(argument);
+        }
+
         @Override
         protected Producer<T> changeFrom(BeanFactoryProducer beanFactoryProducer) {
             if (beanFactory instanceof CustomizedFactory)
                 return this;
-            return builder().baseOn(beanFactoryProducer.builder()).new BeanFactoryProducer(argument);
-        }
-
-        @Override
-        public <T> void addDependency(List<Object> property, List<List<Object>> dependencies, Function<List<Object>, T> rule) {
-            this.dependencies.put(property, new PropertyDependency<>(property, dependencies, rule));
+            return beanFactoryProducer.useSpecInDefinition(Builder.this, argument);
         }
 
         @SuppressWarnings("unchecked")
@@ -241,30 +217,32 @@ public class Builder<T> {
             dependencies.values().forEach(propertyDependency -> propertyDependency.processDependency(this));
 
             getChildren().stream()
-                    .filter(ProducerRef::isBeanFactoryProducer)
-                    .collect(Collectors.groupingBy(Function.identity()))
-                    .forEach((_ignore, refs) -> refs.stream().reduce((r1, r2) -> r1.link((ProducerRef) r2)));
+                    .filter(producerRef -> producerRef.get() instanceof Builder.BeanFactoryProducer)
+                    .collect(Collectors.groupingBy(Handler::get))
+                    .forEach((_ignore, refs) -> refs.stream().reduce((r1, r2) -> r1.link((Handler) r2)));
             return this;
         }
 
-        public void addDependency(String property1, String[] properties, Function<Object[], Object> dependency) {
-            List<Object> beanIndexes = getIndexes();
+        public void addDependency(String property, String[] properties, Function<Object[], Object> dependency) {
+            List<Object> beanIndexes = getIndex();
 
             List<Object> propertyIndexChain = new ArrayList<>(beanIndexes);
-            propertyIndexChain.add(property1);
+            propertyIndexChain.add(property);
 
-            List<List<Object>> dependencyIndexChains = Arrays.stream(properties).map(property -> {
+            List<List<Object>> dependencyIndexChains = Arrays.stream(properties).map(p -> {
                 List<Object> dependencyIndexChain = new ArrayList<>(beanIndexes);
-                dependencyIndexChain.add(property);
+                dependencyIndexChain.add(p);
                 return dependencyIndexChain;
             }).collect(Collectors.toList());
 
-            getRoot().addDependency(propertyIndexChain, dependencyIndexChains, deps -> dependency.apply(deps.toArray()));
+            ((Builder<?>.BeanFactoryProducer) getRoot()).dependencies.put(propertyIndexChain,
+                    new PropertyDependency<>(propertyIndexChain, dependencyIndexChains, deps -> dependency.apply(deps.toArray())));
         }
 
         public CollectionProducer<?> getOrAddCollectionProducer(String property) {
-            return (CollectionProducer<?>) getOrAdd(property, () ->
-                    new CollectionProducer<>(beanFactory.getType().getPropertyWriter(property).getPropertyTypeWrapper()));
+            Handler<?> handler = propertyProducerRefs.get(property);
+            return handler == null ? addProperty(property, new CollectionProducer<>(beanFactory.getType().getPropertyWriter(property).getPropertyTypeWrapper()))
+                    : (CollectionProducer<?>) handler.get();
         }
     }
 }

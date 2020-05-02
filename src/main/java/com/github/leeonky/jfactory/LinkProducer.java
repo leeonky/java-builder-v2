@@ -1,14 +1,14 @@
 package com.github.leeonky.jfactory;
 
 class LinkProducer<T> extends Producer<T> {
-    private final ProducerRef<T> producerRef;
+    private final Handler<T> handler;
 
-    public LinkProducer(ProducerRef<T> producerRef) {
-        this.producerRef = producerRef;
+    public LinkProducer(Handler<T> handler) {
+        this.handler = handler;
     }
 
     @Override
     public T produce() {
-        return producerRef.produce();
+        return handler.produce();
     }
 }
