@@ -121,9 +121,8 @@ public class Builder<T> {
 
         @SuppressWarnings("unchecked")
         public <P extends Producer<?>> P addProperty(String property, P producer) {
-            propertyProducerRefs.computeIfAbsent(property, k -> new Handler<>(new ValueProducer<>(() -> null)))
+            return (P) propertyProducerRefs.computeIfAbsent(property, k -> new Handler<>(new ValueProducer<>(() -> null), this))
                     .changeProducer((Producer) producer);
-            return (P) producer.setParent(this);
         }
 
         @Override
@@ -148,26 +147,6 @@ public class Builder<T> {
         }
 
         @Override
-        public int hashCode() {
-            return String.format("BeanFactory:%d;MixIn:%d;Properties:%d:TypeMixIn:%d:PropertySpec:%d",
-                    beanFactory.hashCode(), mixIns.hashCode(), properties.hashCode(), typeMixIn.hashCode(), propertySpecs.hashCode()).hashCode();
-        }
-
-        private boolean equalsWithBuilder(Builder<?> builder) {
-            return Objects.equals(beanFactory, builder.beanFactory)
-                    && Objects.equals(mixIns, builder.mixIns)
-                    && Objects.equals(typeMixIn, builder.typeMixIn)
-                    && Objects.equals(properties, builder.properties)
-                    && Objects.equals(propertySpecs, builder.propertySpecs);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj instanceof Builder.BeanFactoryProducer ?
-                    ((Builder<?>.BeanFactoryProducer) obj).equalsWithBuilder(Builder.this) : super.equals(obj);
-        }
-
-        @Override
         public Handler<?> getByIndex(List<Object> index) {
             LinkedList<Object> leftProperty = new LinkedList<>(index);
             Handler<?> handler = propertyProducerRefs.get(leftProperty.removeFirst());
@@ -182,19 +161,19 @@ public class Builder<T> {
         public void changeByIndex(List<Object> index, Producer<?> producer) {
             LinkedList<Object> leftProperty = new LinkedList<>(index);
             String p = (String) leftProperty.removeFirst();
-            Handler handler = propertyProducerRefs.get(p);
+            Handler<?> handler = propertyProducerRefs.get(p);
             if (leftProperty.isEmpty()) {
                 if (handler == null)
                     addProperty(p, producer);
                 else
-                    handler.changeProducer(producer);
+                    handler.changeProducer((Producer) producer);
             } else
                 handler.get().changeByIndex(index, producer);
         }
 
 
         @Override
-        public Producer<T> changeTo(Producer<T> producer) {
+        protected Producer<T> changeTo(Producer<T> producer) {
             return producer.changeFrom(this);
         }
 
@@ -243,6 +222,26 @@ public class Builder<T> {
             Handler<?> handler = propertyProducerRefs.get(property);
             return handler == null ? addProperty(property, new CollectionProducer<>(beanFactory.getType().getPropertyWriter(property).getPropertyTypeWrapper()))
                     : (CollectionProducer<?>) handler.get();
+        }
+
+        @Override
+        public int hashCode() {
+            return String.format("BeanFactory:%d;MixIn:%d;Properties:%d:TypeMixIn:%d:PropertySpec:%d",
+                    beanFactory.hashCode(), mixIns.hashCode(), properties.hashCode(), typeMixIn.hashCode(), propertySpecs.hashCode()).hashCode();
+        }
+
+        private boolean equalsWithBuilder(Builder<?> builder) {
+            return Objects.equals(beanFactory, builder.beanFactory)
+                    && Objects.equals(mixIns, builder.mixIns)
+                    && Objects.equals(typeMixIn, builder.typeMixIn)
+                    && Objects.equals(properties, builder.properties)
+                    && Objects.equals(propertySpecs, builder.propertySpecs);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof Builder.BeanFactoryProducer ?
+                    ((Builder<?>.BeanFactoryProducer) obj).equalsWithBuilder(Builder.this) : super.equals(obj);
         }
     }
 }

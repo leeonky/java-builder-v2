@@ -26,7 +26,7 @@ class CollectionProducer<T> extends Producer<T> {
     @SuppressWarnings("unchecked")
     public void setElementProducer(int index, Producer<?> producer) {
         for (int i = elementHandlers.size(); i <= index; i++)
-            elementHandlers.add(new Handler<>(new ValueProducer<>(() -> null).setParent(this)));
+            elementHandlers.add(new Handler<>(new ValueProducer<>(() -> null), this));
         elementHandlers.get(index).changeProducer((Producer) producer);
     }
 

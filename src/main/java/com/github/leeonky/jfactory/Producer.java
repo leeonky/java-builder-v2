@@ -7,10 +7,10 @@ public abstract class Producer<T> {
     private Producer<?> parent;
 
     static Collection<Handler<?>> collectChildren(Collection<Handler<?>> producers) {
-        return producers.stream().flatMap(producer -> {
+        return producers.stream().flatMap(handler -> {
             List<Handler<?>> subProducers = new ArrayList<>();
-            subProducers.add(producer);
-            subProducers.addAll(producer.getChildren());
+            subProducers.add(handler);
+            subProducers.addAll(handler.producer.getChildren());
             return subProducers.stream();
         }).collect(Collectors.toList());
     }
@@ -21,7 +21,7 @@ public abstract class Producer<T> {
         return Collections.emptyList();
     }
 
-    public Producer<T> changeTo(Producer<T> producer) {
+    protected Producer<T> changeTo(Producer<T> producer) {
         return producer;
     }
 
@@ -43,15 +43,6 @@ public abstract class Producer<T> {
         return parent.getRoot();
     }
 
-    public Producer<?> getParent() {
-        return parent;
-    }
-
-    public Producer<T> setParent(Producer<?> parent) {
-        this.parent = parent;
-        return this;
-    }
-
     protected Object indexOf(Producer<?> element) {
         throw new IllegalStateException(String.format("`%s` has no nested producers", getClass().getName()));
     }
@@ -69,17 +60,16 @@ public abstract class Producer<T> {
         private T value;
         private boolean produced = false;
 
-        Handler(Producer<T> producer) {
+        Handler(Producer<T> producer, Producer<?> parent) {
+            producer.parent = parent;
             this.producer = Objects.requireNonNull(producer);
         }
 
-        public Collection<Handler<?>> getChildren() {
-            return producer.getChildren();
-        }
-
-        public void changeProducer(Producer<T> producer) {
-            Producer<?> parent = this.producer.getParent();
-            (this.producer = this.producer.changeTo(producer)).setParent(parent);
+        public <P extends Producer<T>> P changeProducer(P producer) {
+            Producer<?> parent = this.producer.parent;
+            this.producer = this.producer.changeTo(producer);
+            this.producer.parent = parent;
+            return producer;
         }
 
         public Handler<T> link(Handler<T> another) {
