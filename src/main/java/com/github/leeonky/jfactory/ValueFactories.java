@@ -31,7 +31,9 @@ public class ValueFactories {
         put(boolean.class, get(Boolean.class));
 
         put(String.class, new ValueFactory<>(String.class).construct(argument ->
-                (argument.getProperty() == null ? "string" : argument.getProperty()) + argument.getSequence()));
+                (argument.getProperty() == null ?
+                        "string"
+                        : argument.getProperty()) + argument.getSequence()));
 
         put(BigInteger.class, new ValueFactory<>(BigInteger.class).construct(argument ->
                 BigInteger.valueOf(argument.getSequence())));

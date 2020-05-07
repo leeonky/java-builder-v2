@@ -25,6 +25,13 @@ class _08_DependencyAndLink {
         private Bean bean1, bean2;
     }
 
+    @Getter
+    @Setter
+    public static class BeansWrapper {
+        private Bean bean;
+        private Beans beans;
+    }
+
     @Nested
     class PropertyDependency {
 
@@ -48,6 +55,39 @@ class _08_DependencyAndLink {
 
             assertThat(factorySet.type(Beans.class).property("bean2", bean2).create())
                     .hasFieldOrPropertyWithValue("bean1", bean2);
+        }
+
+        @Test
+        void override_with_dependency() {
+            factorySet.factory(Beans.class).define((argument, spec) -> {
+                spec.property("bean1").value(null);
+                spec.property("bean1").dependsOn("bean2", obj -> obj);
+            });
+            Bean bean2 = new Bean();
+
+            assertThat(factorySet.type(Beans.class).property("bean2", bean2).create())
+                    .hasFieldOrPropertyWithValue("bean1", bean2);
+        }
+
+        @Test
+        void dependency_in_different_level() {
+            factorySet.factory(BeansWrapper.class).define((argument, spec) -> {
+                spec.property("beans").type(Beans.class);
+                spec.property("beans.bean1").dependsOn("bean", obj -> obj);
+            });
+            Bean bean = new Bean();
+
+            assertThat(factorySet.type(BeansWrapper.class).property("bean", bean).create().getBeans())
+                    .hasFieldOrPropertyWithValue("bean1", bean);
+
+            factorySet.factory(BeansWrapper.class).define((argument, spec) -> {
+                spec.property("beans").type(Beans.class, builder -> builder.property("bean1", bean));
+                spec.property("bean").dependsOn("beans.bean1", obj -> obj);
+            });
+
+            BeansWrapper actual = factorySet.type(BeansWrapper.class).create();
+            assertThat(actual)
+                    .hasFieldOrPropertyWithValue("bean", bean);
         }
     }
 }

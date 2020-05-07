@@ -34,7 +34,9 @@ public class Builder<T> {
 
     public T query() {
         Collection<T> collection = queryAll();
-        return collection.isEmpty() ? null : collection.iterator().next();
+        return collection.isEmpty() ?
+                null
+                : collection.iterator().next();
     }
 
     public Collection<T> queryAll() {
@@ -116,11 +118,11 @@ public class Builder<T> {
         private void collectPropertyDefaultProducer(Argument argument) {
             beanFactory.getProperties().forEach((name, propertyWriter) ->
                     factorySet.getValueFactories().of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
-                            addProperty(name, new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))));
+                            addProducer(name, new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))));
         }
 
         @SuppressWarnings("unchecked")
-        public <P extends Producer<?>> P addProperty(String property, P producer) {
+        public <P extends Producer<?>> P addProducer(String property, P producer) {
             return (P) propertyProducerRefs.computeIfAbsent(property, k -> new Handler<>(new ValueProducer<>(() -> null), this))
                     .changeProducer((Producer) producer);
         }
@@ -149,11 +151,10 @@ public class Builder<T> {
         @Override
         public Handler<?> getByIndex(List<Object> index) {
             LinkedList<Object> leftProperty = new LinkedList<>(index);
-            Handler<?> handler = propertyProducerRefs.get(leftProperty.removeFirst());
-            if (leftProperty.isEmpty())
-                return handler;
-            else
-                return handler.get().getByIndex(leftProperty);
+            Handler<?> handler = propertyProducerRefs.get((String) leftProperty.removeFirst());
+            return leftProperty.isEmpty() ?
+                    handler
+                    : handler.get().getByIndex(leftProperty);
         }
 
         @Override
@@ -164,13 +165,12 @@ public class Builder<T> {
             Handler<?> handler = propertyProducerRefs.get(p);
             if (leftProperty.isEmpty()) {
                 if (handler == null)
-                    addProperty(p, producer);
+                    addProducer(p, producer);
                 else
                     handler.changeProducer((Producer) producer);
             } else
-                handler.get().changeByIndex(index, producer);
+                handler.get().changeByIndex(leftProperty, producer);
         }
-
 
         @Override
         protected Producer<T> changeTo(Producer<T> producer) {
@@ -206,11 +206,11 @@ public class Builder<T> {
             List<Object> beanIndexes = getIndex();
 
             List<Object> propertyIndexChain = new ArrayList<>(beanIndexes);
-            propertyIndexChain.add(property);
+            propertyIndexChain.addAll(asList(property.split("\\.")));
 
             List<List<Object>> dependencyIndexChains = Arrays.stream(properties).map(p -> {
                 List<Object> dependencyIndexChain = new ArrayList<>(beanIndexes);
-                dependencyIndexChain.add(p);
+                dependencyIndexChain.addAll(asList(p.split("\\.")));
                 return dependencyIndexChain;
             }).collect(Collectors.toList());
 
@@ -220,7 +220,8 @@ public class Builder<T> {
 
         public CollectionProducer<?> getOrAddCollectionProducer(String property) {
             Handler<?> handler = propertyProducerRefs.get(property);
-            return handler == null ? addProperty(property, new CollectionProducer<>(beanFactory.getType().getPropertyWriter(property).getPropertyTypeWrapper()))
+            return handler == null ?
+                    addProducer(property, new CollectionProducer<>(beanFactory.getType().getPropertyWriter(property).getPropertyTypeWrapper()))
                     : (CollectionProducer<?>) handler.get();
         }
 
@@ -241,7 +242,8 @@ public class Builder<T> {
         @Override
         public boolean equals(Object obj) {
             return obj instanceof Builder.BeanFactoryProducer ?
-                    ((Builder<?>.BeanFactoryProducer) obj).equalsWithBuilder(Builder.this) : super.equals(obj);
+                    ((Builder<?>.BeanFactoryProducer) obj).equalsWithBuilder(Builder.this)
+                    : super.equals(obj);
         }
     }
 }

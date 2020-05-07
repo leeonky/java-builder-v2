@@ -74,7 +74,7 @@ class QueryExpression<T> {
     }
 
     public void queryOrCreateNested(FactorySet factorySet, Builder<T>.BeanFactoryProducer beanFactoryProducer) {
-        beanFactoryProducer.addProperty(property, conditionValue.buildProducer(factorySet));
+        beanFactoryProducer.addProducer(property, conditionValue.buildProducer(factorySet));
     }
 
     private abstract class ConditionValue {
@@ -141,7 +141,9 @@ class QueryExpression<T> {
         }
 
         private Builder<?> toBuilder(FactorySet factorySet, Class<?> propertyType) {
-            return (definition != null ? factorySet.toBuild(definition) : factorySet.type(propertyType))
+            return (definition != null ?
+                    factorySet.toBuild(definition)
+                    : factorySet.type(propertyType))
                     .mixIn(mixIns);
         }
     }
@@ -177,7 +179,9 @@ class QueryExpression<T> {
         }
 
         private Builder<?> toBuilder(FactorySet factorySet, Class<?> propertyType) {
-            return (definition != null ? factorySet.toBuild(definition) : factorySet.type(propertyType))
+            return (definition != null ?
+                    factorySet.toBuild(definition)
+                    : factorySet.type(propertyType))
                     .mixIn(mixIns).properties(conditionValues);
         }
 
@@ -247,7 +251,9 @@ class QueryExpression<T> {
         @Override
         protected ConditionValue mergeTo(CollectionConditionValue collectionConditionValue) {
             collectionConditionValue.conditionValueIndexMap.forEach((k, v) ->
-                    conditionValueIndexMap.put(k, conditionValueIndexMap.containsKey(k) ? conditionValueIndexMap.get(k).merge(v) : v));
+                    conditionValueIndexMap.put(k, conditionValueIndexMap.containsKey(k) ?
+                            conditionValueIndexMap.get(k).merge(v)
+                            : v));
             return this;
         }
     }

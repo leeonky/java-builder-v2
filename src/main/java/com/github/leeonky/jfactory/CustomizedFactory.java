@@ -43,6 +43,8 @@ class CustomizedFactory<T> extends BeanFactory<T> {
 
     private String getMixInName(Method method) {
         MixIn annotation = method.getAnnotation(MixIn.class);
-        return annotation.value().isEmpty() ? method.getName() : annotation.value();
+        return annotation.value().isEmpty() ?
+                method.getName()
+                : annotation.value();
     }
 }

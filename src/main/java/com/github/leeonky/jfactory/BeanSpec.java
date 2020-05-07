@@ -36,7 +36,7 @@ public class BeanSpec<T> implements Spec<T> {
         }
 
         protected void addProducer(Producer<?> producer) {
-            beanFactoryProducer.addProperty(property, producer);
+            beanFactoryProducer.addProducer(property, producer);
         }
 
         public <T> void from(Class<? extends Definition<T>> definition) {

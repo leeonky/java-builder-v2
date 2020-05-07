@@ -17,16 +17,7 @@ class PropertyDependency<T> {
 
     @SuppressWarnings("unchecked")
     public void processDependency(Producer<?> producer) {
-        Producer.Handler<?> handler = producer.getByIndex(property);
-        if (handler == null) {
-            producer.changeByIndex(property, new DependencyProducer(
-                    dependencies.stream().map(producer::getByIndex).collect(Collectors.toList()),
-                    rule
-            ));
-        } else
-            handler.changeProducer(new DependencyProducer(
-                    dependencies.stream().map(producer::getByIndex).collect(Collectors.toList()),
-                    rule
-            ));
+        producer.changeByIndex(property, new DependencyProducer(
+                dependencies.stream().map(producer::getByIndex).collect(Collectors.toList()), rule));
     }
 }
