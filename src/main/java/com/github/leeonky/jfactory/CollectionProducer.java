@@ -2,10 +2,7 @@ package com.github.leeonky.jfactory;
 
 import com.github.leeonky.util.BeanClass;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class CollectionProducer<T> extends Producer<T> {
@@ -41,5 +38,35 @@ class CollectionProducer<T> extends Producer<T> {
             if (Objects.equals(elementHandlers.get(i).get(), sub))
                 return i;
         throw new IllegalStateException();
+    }
+
+    @Override
+    public Handler<?> getByIndex(List<Object> index) {
+        LinkedList<Object> leftProperty = new LinkedList<>(index);
+        Handler<?> handler = getHandler((int) leftProperty.removeFirst());
+        return leftProperty.isEmpty() ?
+                handler
+                : handler.get().getByIndex(leftProperty);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void changeByIndex(List<Object> index, Producer<?> producer) {
+        LinkedList<Object> leftProperty = new LinkedList<>(index);
+        int i = (int) leftProperty.removeFirst();
+        Handler<?> handler = getHandler(i);
+        if (leftProperty.isEmpty()) {
+            if (handler == null)
+                elementHandlers.set(i, new Handler<>(producer, this));
+            else
+                handler.changeProducer((Producer) producer);
+        } else
+            handler.get().changeByIndex(leftProperty, producer);
+    }
+
+    private Handler<?> getHandler(int index) {
+        for (int i = elementHandlers.size(); i <= index; i++)
+            elementHandlers.add(new Handler<>(new ValueProducer<>(() -> null), this));
+        return elementHandlers.get(index);
     }
 }

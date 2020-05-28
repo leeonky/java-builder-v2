@@ -19,7 +19,8 @@ public class BeanSpec<T> implements Spec<T> {
     public PropertySpec property(String property) {
         String[] propertyAndIndex = property.split("[\\[\\]]");
         if (propertyAndIndex.length > 1)
-            return new CollectionElementSpec(propertyAndIndex[0], Integer.valueOf(propertyAndIndex[1]));
+            return new CollectionElementSpec(propertyAndIndex[0], Integer.valueOf(propertyAndIndex[1]),
+                    propertyAndIndex.length > 2 ? propertyAndIndex[2] : "");
         return new PropertySpec(property);
     }
 
@@ -74,15 +75,22 @@ public class BeanSpec<T> implements Spec<T> {
 
     class CollectionElementSpec extends PropertySpec {
         private final int index;
+        private final String leftChain;
 
-        public CollectionElementSpec(String property, int index) {
+        public CollectionElementSpec(String property, int index, String leftChain) {
             super(property);
             this.index = index;
+            this.leftChain = leftChain;
         }
 
         @Override
         protected void addProducer(Producer<?> producer) {
             beanFactoryProducer.getOrAddCollectionProducer(property).setElementProducer(index, producer);
+        }
+
+        @Override
+        public void dependsOn(String[] properties, Function<Object[], Object> dependency) {
+            beanFactoryProducer.addDependency(String.format("%s[%d]%s", property, index, leftChain), properties, dependency);
         }
     }
 }

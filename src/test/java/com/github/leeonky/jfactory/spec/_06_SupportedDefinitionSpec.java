@@ -73,17 +73,6 @@ class _06_SupportedDefinitionSpec {
         private int value;
     }
 
-    public static class ATable extends Definition<Table> {
-
-        @Override
-        public void define() {
-            spec().property("rows[0]").type(Row.class, builder ->
-                    builder.spec("table", (arg, pSpec) ->
-                            pSpec.supplier(argument().willGetCurrent())).property("value", 100)
-            );
-        }
-    }
-
     @Nested
     class SpecifyValue {
 
@@ -183,7 +172,14 @@ class _06_SupportedDefinitionSpec {
 
         @Test
         void support_define_collection_element_spec() {
-            Table table = factorySet.createFrom(ATable.class);
+            factorySet.factory(Table.class).define((arg, spec) ->
+                    spec.property("rows[0]").type(Row.class, builder ->
+                            builder.spec("table", (arg2, pSpec) ->
+                                    pSpec.supplier(arg.willGetCurrent())).property("value", 100)
+                    )
+            );
+
+            Table table = factorySet.create(Table.class);
 
             assertThat(table.getRows())
                     .hasSize(1);
@@ -192,5 +188,11 @@ class _06_SupportedDefinitionSpec {
                     .hasFieldOrPropertyWithValue("table", table)
                     .hasFieldOrPropertyWithValue("value", 100);
         }
+    }
+
+    @Nested
+    class NotSupportPropertyChain {
+
+        //TODO
     }
 }

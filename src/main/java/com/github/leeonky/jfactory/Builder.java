@@ -203,19 +203,22 @@ public class Builder<T> {
         }
 
         public void addDependency(String property, String[] properties, Function<Object[], Object> dependency) {
-            List<Object> beanIndexes = getIndex();
-
-            List<Object> propertyIndexChain = new ArrayList<>(beanIndexes);
-            propertyIndexChain.addAll(asList(property.split("\\.")));
-
-            List<List<Object>> dependencyIndexChains = Arrays.stream(properties).map(p -> {
-                List<Object> dependencyIndexChain = new ArrayList<>(beanIndexes);
-                dependencyIndexChain.addAll(asList(p.split("\\.")));
-                return dependencyIndexChain;
-            }).collect(Collectors.toList());
-
+            List<Object> propertyIndexChain = toIndex(property);
+            List<List<Object>> dependencyIndexChains = Arrays.stream(properties).map(this::toIndex).collect(Collectors.toList());
             ((Builder<?>.BeanFactoryProducer) getRoot()).dependencies.put(propertyIndexChain,
                     new PropertyDependency<>(propertyIndexChain, dependencyIndexChains, deps -> dependency.apply(deps.toArray())));
+        }
+
+        private List<Object> toIndex(String property) {
+            List<Object> propertyIndexChain = new ArrayList<>(getIndex());
+            propertyIndexChain.addAll(Arrays.stream(property.split("[\\[\\].]")).filter(s -> !s.isEmpty()).map(s -> {
+                try {
+                    return Integer.valueOf(s);
+                } catch (Exception ignore) {
+                    return s;
+                }
+            }).collect(Collectors.toList()));
+            return propertyIndexChain;
         }
 
         public CollectionProducer<?> getOrAddCollectionProducer(String property) {

@@ -74,7 +74,7 @@ class QueryExpression<T> {
     }
 
     public void queryOrCreateNested(FactorySet factorySet, Builder<T>.BeanFactoryProducer beanFactoryProducer) {
-        beanFactoryProducer.addProducer(property, conditionValue.buildProducer(factorySet));
+        beanFactoryProducer.addProducer(property, conditionValue.buildProducer(factorySet, beanFactoryProducer));
     }
 
     private abstract class ConditionValue {
@@ -82,7 +82,7 @@ class QueryExpression<T> {
 
         public abstract boolean matches(Class<?> type, Object propertyValue);
 
-        public abstract Producer<?> buildProducer(FactorySet factorySet);
+        public abstract Producer<?> buildProducer(FactorySet factorySet, Builder<T>.BeanFactoryProducer beanFactoryProducer);
 
         public abstract ConditionValue merge(ConditionValue conditionValue);
 
@@ -124,7 +124,7 @@ class QueryExpression<T> {
         }
 
         @Override
-        public Producer<?> buildProducer(FactorySet factorySet) {
+        public Producer<?> buildProducer(FactorySet factorySet, Builder<T>.BeanFactoryProducer beanFactoryProducer) {
             if (isIntently())
                 return toBuilder(factorySet, beanClass.getPropertyWriter(property).getElementOrPropertyType()).producer(property);
             return new ValueProducer<>(() -> value);
@@ -168,7 +168,7 @@ class QueryExpression<T> {
         }
 
         @Override
-        public Producer<?> buildProducer(FactorySet factorySet) {
+        public Producer<?> buildProducer(FactorySet factorySet, Builder<T>.BeanFactoryProducer beanFactoryProducer) {
             if (isIntently())
                 return toBuilder(factorySet, beanClass.getPropertyWriter(property).getElementOrPropertyType()).producer(property);
             Collection<?> collection = toBuilder(factorySet, beanClass.getPropertyReader(property).getElementOrPropertyType()).queryAll();
@@ -237,9 +237,9 @@ class QueryExpression<T> {
         }
 
         @Override
-        public Producer<?> buildProducer(FactorySet factorySet) {
-            CollectionProducer<Object> producer = new CollectionProducer<>(beanClass.getPropertyWriter(property).getPropertyTypeWrapper());
-            conditionValueIndexMap.forEach((k, v) -> producer.setElementProducer(k, v.buildProducer(factorySet)));
+        public Producer<?> buildProducer(FactorySet factorySet, Builder<T>.BeanFactoryProducer beanFactoryProducer) {
+            CollectionProducer<?> producer = beanFactoryProducer.getOrAddCollectionProducer(property);
+            conditionValueIndexMap.forEach((k, v) -> producer.setElementProducer(k, v.buildProducer(factorySet, beanFactoryProducer)));
             return producer;
         }
 

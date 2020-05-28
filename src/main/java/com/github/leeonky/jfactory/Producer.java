@@ -66,6 +66,8 @@ public abstract class Producer<T> {
         }
 
         public <P extends Producer<T>> P changeProducer(P producer) {
+            if (producer == this.producer)
+                return producer;
             Producer<?> parent = this.producer.parent;
             this.producer = this.producer.changeTo(producer);
             this.producer.parent = parent;

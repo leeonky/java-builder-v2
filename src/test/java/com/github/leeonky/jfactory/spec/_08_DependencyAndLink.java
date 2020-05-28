@@ -32,11 +32,23 @@ class _08_DependencyAndLink {
         private Beans beans;
     }
 
+    @Getter
+    @Setter
+    public static class BeanArray {
+        private Bean[] beans;
+    }
+
+    @Getter
+    @Setter
+    public static class BeansArray {
+        private Beans[] beansArray;
+    }
+
     @Nested
     class PropertyDependency {
 
         @Test
-        void dependency_in_same_level() {
+        void depends_on_one_property_in_same_level() {
             factorySet.factory(Beans.class).define((argument, spec) -> {
                 spec.property("bean1").dependsOn("bean2", obj -> obj);
             });
@@ -47,7 +59,7 @@ class _08_DependencyAndLink {
         }
 
         @Test
-        void list_dependency_in_same_level() {
+        void depends_properties_in_same_level() {
             factorySet.factory(Beans.class).define((argument, spec) -> {
                 spec.property("bean1").dependsOn(new String[]{"bean2"}, objs -> objs[0]);
             });
@@ -58,7 +70,7 @@ class _08_DependencyAndLink {
         }
 
         @Test
-        void override_with_dependency() {
+        void dependency_override_spec() {
             factorySet.factory(Beans.class).define((argument, spec) -> {
                 spec.property("bean1").value(null);
                 spec.property("bean1").dependsOn("bean2", obj -> obj);
@@ -88,6 +100,38 @@ class _08_DependencyAndLink {
             BeansWrapper actual = factorySet.type(BeansWrapper.class).create();
             assertThat(actual)
                     .hasFieldOrPropertyWithValue("bean", bean);
+        }
+
+        @Test
+        void dependency_in_collection() {
+            factorySet.factory(BeanArray.class).define((argument, spec) -> {
+                spec.property("beans[1]").dependsOn("beans[0]", obj -> obj);
+            });
+
+            Bean bean = new Bean();
+
+            assertThat(factorySet.type(BeanArray.class).property("beans[0]", bean).create().getBeans())
+                    .containsOnly(bean, bean);
+        }
+
+        @Test
+        void dependency_in_deep_level_collection() {
+            factorySet.factory(BeansArray.class).define((argument, spec) -> {
+                spec.property("beansArray[0]").type(Beans.class);
+                spec.property("beansArray[1]").type(Beans.class);
+                spec.property("beansArray[0].bean1").dependsOn("beansArray[1].bean2", obj -> obj);
+            });
+
+            Bean bean = new Bean();
+
+            BeansArray beansArray = factorySet.type(BeansArray.class).property("beansArray[1].bean2", bean).create();
+            assertThat(beansArray.getBeansArray()).hasSize(2);
+            assertThat(beansArray.getBeansArray()[0])
+                    .hasFieldOrPropertyWithValue("bean1", bean)
+                    .hasFieldOrPropertyWithValue("bean2", null);
+            assertThat(beansArray.getBeansArray()[1])
+                    .hasFieldOrPropertyWithValue("bean1", null)
+                    .hasFieldOrPropertyWithValue("bean2", bean);
         }
     }
 }
