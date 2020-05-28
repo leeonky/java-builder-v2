@@ -37,6 +37,10 @@ public class BeanSpec<T> implements Spec<T> {
         }
 
         protected void addProducer(Producer<?> producer) {
+            if (property.contains(".")) {
+                StackTraceElement traceElement = new Exception().getStackTrace()[2];
+                throw new IllegalArgumentException(String.format("Not support property chain '%s' in current operation\n\tat %s:%d\n", property, traceElement.getFileName(), traceElement.getLineNumber()));
+            }
             beanFactoryProducer.addProducer(property, producer);
         }
 

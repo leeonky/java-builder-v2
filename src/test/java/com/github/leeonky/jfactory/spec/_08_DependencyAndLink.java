@@ -133,5 +133,18 @@ class _08_DependencyAndLink {
                     .hasFieldOrPropertyWithValue("bean1", null)
                     .hasFieldOrPropertyWithValue("bean2", bean);
         }
+
+        @Test
+        void nested_dependency() {
+            factorySet.factory(BeanArray.class).define((argument, spec) -> {
+                spec.property("beans[2]").dependsOn("beans[1]", obj -> obj);
+                spec.property("beans[1]").dependsOn("beans[0]", obj -> obj);
+            });
+
+            Bean bean = new Bean();
+
+            assertThat(factorySet.type(BeanArray.class).property("beans[0]", bean).create().getBeans())
+                    .containsOnly(bean, bean, bean);
+        }
     }
 }

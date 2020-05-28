@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class _06_SupportedDefinitionSpec {
     private FactorySet factorySet = new FactorySet();
@@ -193,6 +194,14 @@ class _06_SupportedDefinitionSpec {
     @Nested
     class NotSupportPropertyChain {
 
-        //TODO
+        @Test
+        void should_raise_error_when_use_property_chain_in_some_spec_definition() {
+            factorySet.factory(Beans.class).define((arg, spec) ->
+                    spec.property("bean.intValue").value(0)
+            );
+
+            assertThat(assertThrows(IllegalArgumentException.class, () -> factorySet.create(Beans.class)))
+                    .hasMessageContaining("Not support property chain 'bean.intValue' in current operation");
+        }
     }
 }
