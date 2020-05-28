@@ -123,7 +123,7 @@ public class Builder<T> {
 
         @SuppressWarnings("unchecked")
         public <P extends Producer<?>> P addProducer(String property, P producer) {
-            return (P) propertyProducerRefs.computeIfAbsent(property, k -> new Handler<>(new ValueProducer<>(() -> null), this))
+            return (P) propertyProducerRefs.computeIfAbsent(property, k -> new Handler<>(new SuggestedValueProducer<>(() -> null), this))
                     .changeProducer((Producer) producer);
         }
 

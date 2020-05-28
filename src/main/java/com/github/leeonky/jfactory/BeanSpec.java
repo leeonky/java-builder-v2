@@ -33,7 +33,7 @@ public class BeanSpec<T> implements Spec<T> {
 
 
         public void value(Object value) {
-            addProducer(new ValueProducer<>(() -> value));
+            addProducer(new SuggestedValueProducer<>(() -> value));
         }
 
         protected void addProducer(Producer<?> producer) {
@@ -65,7 +65,7 @@ public class BeanSpec<T> implements Spec<T> {
         }
 
         public void supplier(Supplier<?> supplier) {
-            addProducer(new ValueProducer<>(supplier));
+            addProducer(new SuggestedValueProducer<>(supplier));
         }
 
         public void dependsOn(String property, Function<Object, Object> dependency) {

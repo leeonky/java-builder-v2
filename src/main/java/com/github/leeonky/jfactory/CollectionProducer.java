@@ -23,7 +23,7 @@ class CollectionProducer<T> extends Producer<T> {
     @SuppressWarnings("unchecked")
     public void setElementProducer(int index, Producer<?> producer) {
         for (int i = elementHandlers.size(); i <= index; i++)
-            elementHandlers.add(new Handler<>(new ValueProducer<>(() -> null), this));
+            elementHandlers.add(new Handler<>(new SuggestedValueProducer<>(() -> null), this));
         elementHandlers.get(index).changeProducer((Producer) producer);
     }
 
@@ -66,7 +66,7 @@ class CollectionProducer<T> extends Producer<T> {
 
     private Handler<?> getHandler(int index) {
         for (int i = elementHandlers.size(); i <= index; i++)
-            elementHandlers.add(new Handler<>(new ValueProducer<>(() -> null), this));
+            elementHandlers.add(new Handler<>(new SuggestedValueProducer<>(() -> null), this));
         return elementHandlers.get(index);
     }
 }
