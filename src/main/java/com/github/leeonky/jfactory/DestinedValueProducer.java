@@ -11,4 +11,9 @@ public class DestinedValueProducer<T> extends Producer<T> {
     public T produce() {
         return value;
     }
+
+    @Override
+    protected Producer<T> changeTo(Producer<T> producer) {
+        return this;
+    }
 }

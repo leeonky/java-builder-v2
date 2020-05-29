@@ -6,6 +6,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 
 public class Builder<T> {
     private final Map<String, Object> properties = new LinkedHashMap<>();
@@ -193,13 +194,23 @@ public class Builder<T> {
 
         @SuppressWarnings("unchecked")
         public Producer<T> processSpec() {
-            dependencies.values().forEach(propertyDependency -> propertyDependency.processDependency(this));
+            processDependencies(emptyList());
 
             getChildren().stream()
                     .filter(producerRef -> producerRef.get() instanceof Builder.BeanFactoryProducer)
                     .collect(Collectors.groupingBy(Handler::get))
                     .forEach((_ignore, refs) -> refs.stream().reduce((r1, r2) -> r1.link((Handler) r2)));
             return this;
+        }
+
+        @Override
+        protected void processDependencies(List<Object> root) {
+            propertyProducerRefs.forEach((k, v) -> {
+                List<Object> sub = new ArrayList<>(root);
+                sub.add(k);
+                v.get().processDependencies(sub);
+            });
+            dependencies.values().forEach(propertyDependency -> propertyDependency.processDependency(this, root));
         }
 
         public void addDependency(String property, String[] properties, Function<Object[], Object> dependency) {

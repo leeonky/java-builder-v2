@@ -16,7 +16,7 @@ class PropertyDependency<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public void processDependency(Producer<?> producer) {
+    public void processDependency(Producer<?> producer, List<Object> root) {
         producer.changeByIndex(property, new DependencyProducer(
                 dependencies.stream().map(producer::getByIndex).collect(Collectors.toList()), rule));
     }

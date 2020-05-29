@@ -52,7 +52,10 @@ public abstract class Producer<T> {
     }
 
     public void changeByIndex(List<Object> index, Producer<?> producer) {
-        throw new IllegalStateException(String.format("Only %s support query sub Handler", Builder.BeanFactoryProducer.class.getName()));
+        //do nothing if not collection or BeanFactoryProducer
+    }
+
+    protected void processDependencies(List<Object> root) {
     }
 
     static class Handler<T> {

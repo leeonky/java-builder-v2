@@ -59,7 +59,7 @@ class _08_DependencyAndLink {
         }
 
         @Test
-        void depends_properties_in_same_level() {
+        void depends_property_list_in_same_level() {
             factorySet.factory(Beans.class).define((argument, spec) -> {
                 spec.property("bean1").dependsOn(new String[]{"bean2"}, objs -> objs[0]);
             });
@@ -135,7 +135,7 @@ class _08_DependencyAndLink {
         }
 
         @Test
-        void nested_dependency() {
+        void dependency_chain_in_one_object_definition() {
             factorySet.factory(BeanArray.class).define((argument, spec) -> {
                 spec.property("beans[2]").dependsOn("beans[1]", obj -> obj);
                 spec.property("beans[1]").dependsOn("beans[0]", obj -> obj);
@@ -145,6 +145,69 @@ class _08_DependencyAndLink {
 
             assertThat(factorySet.type(BeanArray.class).property("beans[0]", bean).create().getBeans())
                     .containsOnly(bean, bean, bean);
+        }
+
+        @Test
+        void dependency_in_two_object_definition() {
+            factorySet.factory(BeansWrapper.class).define((argument, spec) -> {
+                spec.property("beans").type(Beans.class);
+                spec.property("bean").dependsOn("beans.bean1", obj -> obj);
+            });
+            factorySet.factory(Beans.class).define((argument, spec) -> {
+                spec.property("bean1").dependsOn("bean2", obj -> obj);
+            });
+
+            Bean bean = new Bean();
+            BeansWrapper beansWrapper = factorySet.type(BeansWrapper.class)
+                    .property("beans.bean2", bean).create();
+
+            assertThat(beansWrapper)
+                    .hasFieldOrPropertyWithValue("bean", bean);
+            assertThat(beansWrapper.getBeans())
+                    .hasFieldOrPropertyWithValue("bean1", bean)
+                    .hasFieldOrPropertyWithValue("bean2", bean);
+        }
+    }
+
+    @Nested
+    class OverrideByInputProperty {
+
+        @Test
+        void override_by_input_property() {
+            factorySet.factory(Beans.class).define((argument, spec) -> {
+                spec.property("bean1").dependsOn("bean2", obj -> obj);
+            });
+
+            Bean bean1 = new Bean();
+            Bean bean2 = new Bean();
+            Beans beans = factorySet.type(Beans.class)
+                    .property("bean1", bean1)
+                    .property("bean2", bean2).create();
+
+            assertThat(beans)
+                    .hasFieldOrPropertyWithValue("bean1", bean1)
+                    .hasFieldOrPropertyWithValue("bean2", bean2)
+            ;
+        }
+
+        @Test
+        void override_by_input_property_in_parent_object() {
+            factorySet.factory(BeansWrapper.class).define((argument, spec) -> {
+                spec.property("beans").type(Beans.class);
+                spec.property("beans.bean1").dependsOn("bean", obj -> obj);
+            });
+
+            Bean bean = new Bean();
+            Beans beans = new Beans();
+            BeansWrapper beansWrapper = factorySet.type(BeansWrapper.class)
+                    .property("beans", beans)
+                    .property("bean", bean).create();
+
+            assertThat(beansWrapper.getBeans().getBean1()).isNotEqualTo(bean);
+            assertThat(beansWrapper)
+                    .hasFieldOrPropertyWithValue("beans", beans)
+                    .hasFieldOrPropertyWithValue("bean", bean)
+            ;
         }
     }
 }
