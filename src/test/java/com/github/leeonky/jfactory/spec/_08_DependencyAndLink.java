@@ -3,6 +3,7 @@ package com.github.leeonky.jfactory.spec;
 import com.github.leeonky.jfactory.FactorySet;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ class _08_DependencyAndLink {
 
     @Getter
     @Setter
+    @Accessors(chain = true)
     public static class Bean {
         private String content;
         private String stringValue;
@@ -21,8 +23,9 @@ class _08_DependencyAndLink {
 
     @Getter
     @Setter
+    @Accessors(chain = true)
     public static class Beans {
-        private Bean bean1, bean2;
+        private Bean bean1, bean2, bean3;
     }
 
     @Getter
@@ -135,7 +138,7 @@ class _08_DependencyAndLink {
         }
 
         @Test
-        void dependency_chain_in_one_object_definition() {
+        void dependency_chain_in_array() {
             factorySet.factory(BeanArray.class).define((argument, spec) -> {
                 spec.property("beans[2]").dependsOn("beans[1]", obj -> obj);
                 spec.property("beans[1]").dependsOn("beans[0]", obj -> obj);
@@ -145,6 +148,51 @@ class _08_DependencyAndLink {
 
             assertThat(factorySet.type(BeanArray.class).property("beans[0]", bean).create().getBeans())
                     .containsOnly(bean, bean, bean);
+        }
+
+        @Test
+        void should_read_property_value_when_no_input_in_dependency() {
+            Bean bean = new Bean();
+            factorySet.factory(Beans.class)
+                    .construct(argument -> new Beans().setBean2(bean))
+                    .define((argument, spec) ->
+                            spec.property("bean1").dependsOn("bean2", obj -> obj)
+                    );
+
+            assertThat(factorySet.create(Beans.class))
+                    .hasFieldOrPropertyWithValue("bean1", bean)
+                    .hasFieldOrPropertyWithValue("bean2", bean)
+            ;
+        }
+
+        @Test
+        void should_skip_dependency_when_property_chain_this_has_no_spec() {
+            factorySet.factory(Beans.class).define((argument, spec) -> {
+                spec.property("bean1.stringValue").dependsOn("bean2", obj -> ((Bean) obj).getIntValue() + "");
+            });
+
+            Beans beans = factorySet.type(Beans.class)
+                    .create();
+
+            assertThat(beans)
+                    .hasFieldOrPropertyWithValue("bean1", null)
+                    .hasFieldOrPropertyWithValue("bean2", null);
+        }
+
+        @Test
+        void dependency_chain_in_one_object() {
+            factorySet.factory(Beans.class).define((argument, spec) -> {
+                spec.property("bean1").dependsOn("bean2", obj -> obj);
+                spec.property("bean2").dependsOn("bean3", obj -> obj);
+            });
+
+            Bean bean = new Bean();
+
+            assertThat(factorySet.type(Beans.class).property("bean3", bean).create())
+                    .hasFieldOrPropertyWithValue("bean1", bean)
+                    .hasFieldOrPropertyWithValue("bean2", bean)
+                    .hasFieldOrPropertyWithValue("bean3", bean)
+            ;
         }
 
         @Test
@@ -208,6 +256,31 @@ class _08_DependencyAndLink {
                     .hasFieldOrPropertyWithValue("beans", beans)
                     .hasFieldOrPropertyWithValue("bean", bean)
             ;
+        }
+    }
+
+    @Nested
+    class OverrideByDependency {
+
+        @Test
+        void parent_property_dependency_can_override_sub_property_spec() {
+            factorySet.factory(Beans.class).define((argument, spec) -> {
+                spec.property("bean1").dependsOn("bean3", obj -> obj);
+                spec.property("bean1.stringValue").dependsOn("bean2", obj -> ((Bean) obj).getIntValue() + "");
+            });
+
+            Bean bean2 = new Bean().setIntValue(1000);
+            Bean bean3 = new Bean().setStringValue("bean3");
+            Beans beans = factorySet.type(Beans.class)
+                    .property("bean2", bean2)
+                    .property("bean3", bean3)
+                    .create();
+
+            assertThat(beans)
+                    .hasFieldOrPropertyWithValue("bean1", bean3)
+                    .hasFieldOrPropertyWithValue("bean2", bean2);
+
+            assertThat(bean3).hasFieldOrPropertyWithValue("stringValue", "bean3");
         }
     }
 }

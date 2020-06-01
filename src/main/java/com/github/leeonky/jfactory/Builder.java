@@ -6,7 +6,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 
 public class Builder<T> {
     private final Map<String, Object> properties = new LinkedHashMap<>();
@@ -153,9 +152,11 @@ public class Builder<T> {
         public Handler<?> getByIndex(List<Object> index) {
             LinkedList<Object> leftProperty = new LinkedList<>(index);
             Handler<?> handler = propertyProducerRefs.get((String) leftProperty.removeFirst());
-            return leftProperty.isEmpty() ?
-                    handler
-                    : handler.get().getByIndex(leftProperty);
+            if (leftProperty.isEmpty()) {
+                return handler;
+            } else {
+                return handler.get().getByIndex(leftProperty);
+            }
         }
 
         @Override
@@ -192,25 +193,26 @@ public class Builder<T> {
             return beanFactoryProducer.useSpecInDefinition(Builder.this, argument);
         }
 
-        @SuppressWarnings("unchecked")
         public Producer<T> processSpec() {
-            processDependencies(emptyList());
+            uniqSameSubBuild();
+            processDependencies();
+            return this;
+        }
 
+        @SuppressWarnings("unchecked")
+        private void uniqSameSubBuild() {
             getChildren().stream()
                     .filter(producerRef -> producerRef.get() instanceof Builder.BeanFactoryProducer)
                     .collect(Collectors.groupingBy(Handler::get))
                     .forEach((_ignore, refs) -> refs.stream().reduce((r1, r2) -> r1.link((Handler) r2)));
-            return this;
         }
 
         @Override
-        protected void processDependencies(List<Object> root) {
+        protected void processDependencies() {
             propertyProducerRefs.forEach((k, v) -> {
-                List<Object> sub = new ArrayList<>(root);
-                sub.add(k);
-                v.get().processDependencies(sub);
+                v.get().processDependencies();
             });
-            dependencies.values().forEach(propertyDependency -> propertyDependency.processDependency(this, root));
+            dependencies.values().forEach(propertyDependency -> propertyDependency.processDependency(this));
         }
 
         public void addDependency(String property, String[] properties, Function<Object[], Object> dependency) {

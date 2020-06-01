@@ -2,6 +2,7 @@ package com.github.leeonky.jfactory;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class PropertyDependency<T> {
@@ -15,9 +16,11 @@ class PropertyDependency<T> {
         this.rule = rule;
     }
 
+    // TODO producer maybe changed by another dependency
     @SuppressWarnings("unchecked")
-    public void processDependency(Producer<?> producer, List<Object> root) {
+    public void processDependency(Producer<?> producer) {
         producer.changeByIndex(property, new DependencyProducer(
-                dependencies.stream().map(producer::getByIndex).collect(Collectors.toList()), rule));
+                dependencies.stream().map(index -> (Supplier<?>) () -> producer.getByIndex(index).produce()).collect(Collectors.toList()),
+                rule));
     }
 }

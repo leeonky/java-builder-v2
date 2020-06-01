@@ -55,7 +55,7 @@ public abstract class Producer<T> {
         //do nothing if not collection or BeanFactoryProducer
     }
 
-    protected void processDependencies(List<Object> root) {
+    protected void processDependencies() {
     }
 
     static class Handler<T> {
