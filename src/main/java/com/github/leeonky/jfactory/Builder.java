@@ -170,8 +170,10 @@ public class Builder<T> {
                     addProducer(p, producer);
                 else
                     handler.changeProducer((Producer) producer);
-            } else
-                handler.get().changeByIndex(leftProperty, producer);
+            } else {
+                if (handler != null)
+                    handler.get().changeByIndex(leftProperty, producer);
+            }
         }
 
         @Override

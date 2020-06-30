@@ -259,25 +259,39 @@ class _08_DependencyAndLink {
     @Nested
     class TargetPropertyObjectIsNotBeanFactoryProducer {
 
-//        @Nested
-//        class InProperty {
-//
-//            @Test
-//            void should_ignore_dependency() {
-//                factorySet.factory(Beans.class).define((argument, spec) -> {
-//                    spec.property("bean1.stringValue").dependsOn("bean2", obj -> ((Bean) obj).getIntValue() + "");
-//                });
-//
-//                Bean bean = new Bean();
-//                Beans beans = factorySet.type(Beans.class)
-//                        .property("bean2", bean)
-//                        .create();
-//
-//                assertThat(beans)
-//                        .hasFieldOrPropertyWithValue("bean1", null)
-//                        .hasFieldOrPropertyWithValue("bean2", bean);
-//            }
-//        }
+        @Nested
+        class InProperty {
+
+            @Test
+            void should_ignore_dependency() {
+                factorySet.factory(Beans.class).define((argument, spec) -> {
+                    spec.property("bean1.stringValue").dependsOn("bean2", obj -> ((Bean) obj).getIntValue() + "");
+                });
+
+                Bean bean = new Bean();
+                Beans beans = factorySet.type(Beans.class)
+                        .property("bean2", bean)
+                        .create();
+
+                assertThat(beans)
+                        .hasFieldOrPropertyWithValue("bean1", null)
+                        .hasFieldOrPropertyWithValue("bean2", bean);
+            }
+
+            @Test
+            void should_ignore_dependency_in_collection() {
+                factorySet.factory(BeanArray.class).define((argument, spec) -> {
+                    spec.property("beans[1].stringValue").dependsOn("beans[0]", obj -> ((Bean) obj).getIntValue() + "");
+                });
+
+                Bean bean = new Bean();
+                BeanArray beanArray = factorySet.type(BeanArray.class)
+                        .property("beans[0]", bean)
+                        .create();
+
+                assertThat(beanArray.getBeans()).containsOnly(bean, null);
+            }
+        }
     }
 
     @Nested
