@@ -55,6 +55,11 @@ class _02_BeanTypeBasic {
         assertThat(factorySet.type(BeanWithNoDefaultConstructor.class).param("p", "hello").create())
                 .hasFieldOrPropertyWithValue("stringValue", "hello")
                 .hasFieldOrPropertyWithValue("intValue", 1);
+
+        factorySet.factory(BeanWithNoDefaultConstructor.class).construct(arg -> new BeanWithNoDefaultConstructor(arg.param("p", "default"), arg.getSequence()));
+
+        assertThat(factorySet.type(BeanWithNoDefaultConstructor.class).create())
+                .hasFieldOrPropertyWithValue("stringValue", "default");
     }
 
     @Test

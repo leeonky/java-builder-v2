@@ -151,7 +151,7 @@ public class Builder<T> {
         @Override
         public Handler<?> getByIndex(List<Object> index) {
             LinkedList<Object> leftProperty = new LinkedList<>(index);
-            Handler<?> handler = propertyProducerRefs.get((String) leftProperty.removeFirst());
+            Handler<?> handler = propertyProducerRefs.get(leftProperty.removeFirst());
             if (handler == null)
                 return null;
             return leftProperty.isEmpty() ?

@@ -11,40 +11,19 @@ import java.util.stream.Collectors;
 import static java.util.Arrays.asList;
 
 class QueryExpression<T> {
+    private static final int GROUP_PROPERTY = 1;
+    private static final int GROUP_COLLECTION_INDEX = 3;
+    private static final int GROUP_MIX_IN = 5;
+    private static final int GROUP_DEFINITION = 6;
+    private static final int GROUP_INTENTLY = 7;
+    private static final int GROUP_CONDITION = 9;
     private final BeanClass<T> beanClass;
     private String property;
     private ConditionValue conditionValue;
 
     public QueryExpression(BeanClass<T> beanClass, String chain, Object value) {
         this.beanClass = beanClass;
-        String[] propertyAndCondition = chain.split("\\.", 2);
-        boolean intently = propertyAndCondition[0].endsWith("!");
-        propertyAndCondition[0] = propertyAndCondition[0].replace("!", "");
-        String[] propertyAndDefinitionMixIns = propertyAndCondition[0].split("[()]");
-        property = propertyAndDefinitionMixIns[0];
-
-        String[] mixIn;
-        String definition;
-        if (propertyAndDefinitionMixIns.length > 1) {
-            String[] mixInAndDefinition = propertyAndDefinitionMixIns[1].split(", |,| ");
-            mixIn = Arrays.copyOf(mixInAndDefinition, mixInAndDefinition.length - 1);
-            definition = mixInAndDefinition[mixInAndDefinition.length - 1];
-        } else {
-            mixIn = new String[0];
-            definition = null;
-        }
-
-        conditionValue = propertyAndCondition.length > 1 ?
-                new ConditionValueSet(propertyAndCondition[1], value, definition, mixIn)
-                : new SingleValue(value, mixIn, definition);
-
-        conditionValue.setIntently(intently);
-
-        Matcher matcher;
-        if ((matcher = Pattern.compile("(.*)\\[(.*)]").matcher(property)).matches()) {
-            property = matcher.group(1);
-            conditionValue = new CollectionConditionValue(Integer.valueOf(matcher.group(2)), conditionValue);
-        }
+        parsePropertyAndConditionValue(chain, value);
     }
 
     public static <T> List<QueryExpression<T>> createQueryExpressions(BeanClass<T> beanClass, Map<String, Object> criteria) {
@@ -57,12 +36,29 @@ class QueryExpression<T> {
 
     private static <T> QueryExpression<T> mergeToSingle(List<QueryExpression<T>> expressions) {
         for (int i = 1; i < expressions.size(); i++)
-            expressions.get(0).merge(expressions.get(i));
+            expressions.get(0).conditionValue = expressions.get(0).conditionValue.merge(expressions.get(i).conditionValue);
         return expressions.get(0);
     }
 
-    private void merge(QueryExpression<T> another) {
-        conditionValue = conditionValue.merge(another.conditionValue);
+    private void parsePropertyAndConditionValue(String chain, Object value) {
+        Matcher matcher = Pattern.compile("([^.(!\\[]+)(\\[(\\d+)])?(\\(([^, ]*[, ])*(.+)\\))?(!)?(\\.(.+))?").matcher(chain);
+        if (matcher.matches()) {
+            property = matcher.group(GROUP_PROPERTY);
+
+            conditionValue = createConditionValue(value,
+                    matcher.group(GROUP_MIX_IN) != null ? matcher.group(GROUP_MIX_IN).split(", |,| ") : new String[0],
+                    matcher.group(GROUP_DEFINITION), matcher.group(GROUP_CONDITION))
+                    .setIntently(matcher.group(GROUP_INTENTLY) != null);
+
+            if (matcher.group(GROUP_COLLECTION_INDEX) != null)
+                conditionValue = new CollectionConditionValue(Integer.valueOf(matcher.group(GROUP_COLLECTION_INDEX)), conditionValue);
+        }
+    }
+
+    private ConditionValue createConditionValue(Object value, String[] mixIn, String definition, String condition) {
+        return condition != null ?
+                new ConditionValueSet(condition, value, mixIn, definition)
+                : new SingleValue(value, mixIn, definition);
     }
 
     @SuppressWarnings("unchecked")
@@ -102,8 +98,9 @@ class QueryExpression<T> {
             return intently;
         }
 
-        public void setIntently(boolean intently) {
+        public ConditionValue setIntently(boolean intently) {
             this.intently = intently;
+            return this;
         }
     }
 
@@ -153,7 +150,7 @@ class QueryExpression<T> {
         private String[] mixIns;
         private String definition;
 
-        public ConditionValueSet(String condition, Object value, String definition, String[] mixIns) {
+        public ConditionValueSet(String condition, Object value, String[] mixIns, String definition) {
             this.mixIns = mixIns;
             this.definition = definition;
             conditionValues.put(condition, value);
@@ -192,7 +189,6 @@ class QueryExpression<T> {
 
         @Override
         protected ConditionValue mergeTo(ConditionValueSet conditionValueSet) {
-            // to keep property original sequence
             conditionValueSet.conditionValues.putAll(conditionValues);
             conditionValues.clear();
             conditionValues.putAll(conditionValueSet.conditionValues);
