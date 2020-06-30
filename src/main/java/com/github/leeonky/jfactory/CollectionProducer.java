@@ -3,7 +3,6 @@ package com.github.leeonky.jfactory;
 import com.github.leeonky.util.BeanClass;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 class CollectionProducer<T> extends Producer<T> {
     private final BeanClass<?> collectionType;
@@ -16,8 +15,11 @@ class CollectionProducer<T> extends Producer<T> {
     @Override
     @SuppressWarnings("unchecked")
     public T produce() {
-        return (T) collectionType.createCollection(elementHandlers.stream()
-                .map(Handler::produce).collect(Collectors.toList()));
+        List<Object> elements = new ArrayList<>();
+        // Should not use java stream here, elementHandlers.size may be changed in produce
+        for (int i = 0; i < elementHandlers.size(); i++)
+            elements.add(elementHandlers.get(i).produce());
+        return (T) collectionType.createCollection(elements);
     }
 
     @SuppressWarnings("unchecked")

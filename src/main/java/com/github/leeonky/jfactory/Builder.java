@@ -152,11 +152,11 @@ public class Builder<T> {
         public Handler<?> getByIndex(List<Object> index) {
             LinkedList<Object> leftProperty = new LinkedList<>(index);
             Handler<?> handler = propertyProducerRefs.get((String) leftProperty.removeFirst());
-            if (leftProperty.isEmpty()) {
-                return handler;
-            } else {
-                return handler.get().getByIndex(leftProperty);
-            }
+            if (handler == null)
+                return null;
+            return leftProperty.isEmpty() ?
+                    handler
+                    : handler.get().getByIndex(leftProperty);
         }
 
         @Override
@@ -209,10 +209,8 @@ public class Builder<T> {
 
         @Override
         protected void processDependencies() {
-            propertyProducerRefs.forEach((k, v) -> {
-                v.get().processDependencies();
-            });
-            dependencies.values().forEach(propertyDependency -> propertyDependency.processDependency(this));
+            propertyProducerRefs.forEach((k, v) -> v.get().processDependencies());
+            dependencies.values().forEach(propertyDependency -> propertyDependency.processDependency(this, argument));
         }
 
         public void addDependency(String property, String[] properties, Function<Object[], Object> dependency) {

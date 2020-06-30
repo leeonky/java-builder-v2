@@ -1,5 +1,8 @@
 package com.github.leeonky.jfactory;
 
+import com.github.leeonky.util.BeanClass;
+import com.github.leeonky.util.NullPointerInChainException;
+
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -18,9 +21,22 @@ class PropertyDependency<T> {
 
     // TODO producer maybe changed by another dependency
     @SuppressWarnings("unchecked")
-    public void processDependency(Producer<?> producer) {
+    public void processDependency(Producer<?> producer, Argument argument) {
         producer.changeByIndex(property, new DependencyProducer(
-                dependencies.stream().map(index -> (Supplier<?>) () -> producer.getByIndex(index).produce()).collect(Collectors.toList()),
+                dependencies.stream().map(index -> (Supplier<?>) () -> {
+                    Producer.Handler<?> handler = producer.getByIndex(index);
+                    return handler != null ? handler.produce() : getProperty(argument.willGetCurrent().get(), index);
+                }).collect(Collectors.toList()),
                 rule));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object getProperty(Object object, List<Object> properties) {
+        BeanClass beanClass = BeanClass.create(object.getClass());
+        try {
+            return beanClass.getPropertyChainValue(object, properties);
+        } catch (NullPointerInChainException e) {
+            return beanClass.getPropertyChainReader(properties).getPropertyTypeWrapper().createDefault();
+        }
     }
 }

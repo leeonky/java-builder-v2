@@ -39,6 +39,7 @@ class _08_DependencyAndLink {
     @Setter
     public static class BeanArray {
         private Bean[] beans;
+        private int intValue;
     }
 
     @Getter
@@ -151,35 +152,6 @@ class _08_DependencyAndLink {
         }
 
         @Test
-        void should_read_property_value_when_no_input_in_dependency() {
-            Bean bean = new Bean();
-            factorySet.factory(Beans.class)
-                    .construct(argument -> new Beans().setBean2(bean))
-                    .define((argument, spec) ->
-                            spec.property("bean1").dependsOn("bean2", obj -> obj)
-                    );
-
-            assertThat(factorySet.create(Beans.class))
-                    .hasFieldOrPropertyWithValue("bean1", bean)
-                    .hasFieldOrPropertyWithValue("bean2", bean)
-            ;
-        }
-
-        @Test
-        void should_skip_dependency_when_property_chain_this_has_no_spec() {
-            factorySet.factory(Beans.class).define((argument, spec) -> {
-                spec.property("bean1.stringValue").dependsOn("bean2", obj -> ((Bean) obj).getIntValue() + "");
-            });
-
-            Beans beans = factorySet.type(Beans.class)
-                    .create();
-
-            assertThat(beans)
-                    .hasFieldOrPropertyWithValue("bean1", null)
-                    .hasFieldOrPropertyWithValue("bean2", null);
-        }
-
-        @Test
         void dependency_chain_in_one_object() {
             factorySet.factory(Beans.class).define((argument, spec) -> {
                 spec.property("bean1").dependsOn("bean2", obj -> obj);
@@ -196,7 +168,7 @@ class _08_DependencyAndLink {
         }
 
         @Test
-        void dependency_in_two_object_definition() {
+        void dependency_in_two_object_spec_definitions() {
             factorySet.factory(BeansWrapper.class).define((argument, spec) -> {
                 spec.property("beans").type(Beans.class);
                 spec.property("bean").dependsOn("beans.bean1", obj -> obj);
@@ -281,6 +253,96 @@ class _08_DependencyAndLink {
                     .hasFieldOrPropertyWithValue("bean2", bean2);
 
             assertThat(bean3).hasFieldOrPropertyWithValue("stringValue", "bean3");
+        }
+    }
+
+    @Nested
+    class TargetPropertyObjectIsNotBeanFactoryProducer {
+
+//        @Nested
+//        class InProperty {
+//
+//            @Test
+//            void should_ignore_dependency() {
+//                factorySet.factory(Beans.class).define((argument, spec) -> {
+//                    spec.property("bean1.stringValue").dependsOn("bean2", obj -> ((Bean) obj).getIntValue() + "");
+//                });
+//
+//                Bean bean = new Bean();
+//                Beans beans = factorySet.type(Beans.class)
+//                        .property("bean2", bean)
+//                        .create();
+//
+//                assertThat(beans)
+//                        .hasFieldOrPropertyWithValue("bean1", null)
+//                        .hasFieldOrPropertyWithValue("bean2", bean);
+//            }
+//        }
+    }
+
+    @Nested
+    class DependencyIsNotProducer {
+
+        @Test
+        void read_property_value_from_object() {
+            Bean bean = new Bean();
+            factorySet.factory(Beans.class)
+                    .construct(argument -> new Beans().setBean2(bean))
+                    .define((argument, spec) ->
+                            spec.property("bean1").dependsOn("bean2", obj -> obj)
+                    );
+
+            assertThat(factorySet.create(Beans.class))
+                    .hasFieldOrPropertyWithValue("bean1", bean)
+                    .hasFieldOrPropertyWithValue("bean2", bean)
+            ;
+        }
+
+        @Test
+        void read_property_value_from_sub_object() {
+            Bean bean = new Bean().setIntValue(100);
+            factorySet.factory(Beans.class)
+                    .construct(argument -> new Beans().setBean2(bean))
+                    .define((argument, spec) -> {
+                        spec.property("bean1").type(Bean.class);
+                        spec.property("bean1.intValue").dependsOn("bean2.intValue", obj -> obj);
+                    });
+
+            assertThat(factorySet.create(Beans.class).getBean1())
+                    .hasFieldOrPropertyWithValue("intValue", 100)
+                    .isNotEqualTo(bean);
+        }
+
+        @Test
+        void should_use_type_default_value_when_has_null_in_property_chain() {
+            factorySet.factory(Beans.class)
+                    .define((argument, spec) -> {
+                        spec.property("bean1").type(Bean.class);
+                        spec.property("bean1.intValue").dependsOn("bean2.intValue", obj -> obj);
+                    });
+
+            assertThat(factorySet.create(Beans.class).getBean1())
+                    .hasFieldOrPropertyWithValue("intValue", 0)
+            ;
+        }
+
+        @Test
+        void read_property_value_from_collection() {
+            factorySet.factory(BeanArray.class)
+                    .construct(argument -> {
+                        BeanArray beanArray = new BeanArray();
+                        beanArray.beans = new Bean[]{null, new Bean().setIntValue(100)};
+                        return beanArray;
+                    })
+                    .define((argument, spec) -> {
+                        spec.property("beans[0]").type(Bean.class);
+                        spec.property("beans[0].intValue").dependsOn("beans[1].intValue", obj -> obj);
+                    });
+
+            BeanArray beanArray = factorySet.create(BeanArray.class);
+
+            assertThat(beanArray.getBeans()[0])
+                    .hasFieldOrPropertyWithValue("intValue", 100);
         }
     }
 }

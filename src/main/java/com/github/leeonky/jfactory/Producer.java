@@ -48,7 +48,8 @@ public abstract class Producer<T> {
     }
 
     public Handler<?> getByIndex(List<Object> index) {
-        throw new IllegalStateException(String.format("Only %s support query sub Handler", Builder.BeanFactoryProducer.class.getName()));
+        //return null if not collection or BeanFactoryProducer
+        return null;
     }
 
     public void changeByIndex(List<Object> index, Producer<?> producer) {

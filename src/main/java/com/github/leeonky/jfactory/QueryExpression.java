@@ -230,8 +230,7 @@ class QueryExpression<T> {
 
         @Override
         public boolean matches(Class<?> type, Object propertyValue) {
-            List<Object> elements = BeanClass.getElements(propertyValue).orElseThrow(IllegalStateException::new)
-                    .collect(Collectors.toList());
+            List<Object> elements = BeanClass.arrayCollectionToStream(propertyValue).collect(Collectors.toList());
             return conditionValueIndexMap.entrySet().stream()
                     .allMatch(e -> e.getValue().matches(type, elements.get(e.getKey())));
         }
