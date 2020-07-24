@@ -250,9 +250,8 @@ public class Builder<T> {
         private boolean equalsWithBuilder(Builder<?> builder) {
             return Objects.equals(beanFactory, builder.beanFactory)
                     && Objects.equals(mixIns, builder.mixIns)
-                    && Objects.equals(typeMixIn, builder.typeMixIn)
-                    && Objects.equals(properties, builder.properties)
-                    && Objects.equals(propertySpecs, builder.propertySpecs);
+                    && !properties.isEmpty()
+                    && Objects.equals(properties, builder.properties);
         }
 
         @Override

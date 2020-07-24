@@ -191,6 +191,18 @@ class _07_ComplexBuildArgs {
                     .hasFieldOrPropertyWithValue("intValue", 10)
             ;
         }
+
+        @Test
+        void should_not_merge_when_not_specfiy_properties() {
+            factorySet.factory(BeansPair.class).define((argument, beanSpec) -> {
+                beanSpec.property("beans1").type(Beans.class);
+                beanSpec.property("beans2").type(Beans.class);
+            });
+
+            BeansPair beansPair = factorySet.create(BeansPair.class);
+
+            assertThat(beansPair.beans1).isNotEqualTo(beansPair.beans2);
+        }
     }
 
     @Nested
