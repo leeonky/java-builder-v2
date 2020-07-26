@@ -19,7 +19,6 @@ class PropertyDependency<T> {
         this.rule = rule;
     }
 
-    // TODO producer maybe changed by another dependency
     @SuppressWarnings("unchecked")
     public void processDependency(Producer<?> producer, Argument argument) {
         producer.changeByIndex(property, new DependencyProducer(

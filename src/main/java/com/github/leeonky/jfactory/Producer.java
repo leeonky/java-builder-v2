@@ -78,8 +78,17 @@ public abstract class Producer<T> {
             return producer;
         }
 
+        // TODO different producer type
         public Handler<T> link(Handler<T> another) {
-            another.producer = new LinkProducer<>(this);
+            LinkProducer<T> linkProducer = new LinkProducer<>();
+            linkProducer.linker.linkedProducers.producers.add(producer);
+            linkProducer.linker.linkedProducers.producers.add(another.get());
+
+            changeProducer(linkProducer);
+
+            LinkProducer<T> anotherLinkProducer = new LinkProducer<>();
+            anotherLinkProducer.linker.linkedProducers = linkProducer.linker.linkedProducers;
+            another.changeProducer(anotherLinkProducer);
             return this;
         }
 

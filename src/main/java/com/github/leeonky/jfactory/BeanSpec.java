@@ -4,6 +4,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static java.util.Arrays.asList;
+
 public class BeanSpec<T> implements Spec<T> {
     private final Builder<T>.BeanFactoryProducer beanFactoryProducer;
     private final FactorySet factorySet;
@@ -22,6 +24,11 @@ public class BeanSpec<T> implements Spec<T> {
             return new CollectionElementSpec(propertyAndIndex[0], Integer.valueOf(propertyAndIndex[1]),
                     propertyAndIndex.length > 2 ? propertyAndIndex[2] : "");
         return new PropertySpec(property);
+    }
+
+    @Override
+    public void link(String... properties) {
+        beanFactoryProducer.addLink(asList(properties));
     }
 
     public class PropertySpec {

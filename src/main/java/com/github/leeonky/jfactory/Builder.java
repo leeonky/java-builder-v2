@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -99,6 +100,7 @@ public class Builder<T> {
         private final Map<String, Handler<?>> propertyProducerRefs = new LinkedHashMap<>();
         private final Argument argument;
         private Map<List<Object>, PropertyDependency<?>> dependencies = new LinkedHashMap<>();
+        private List<List<List<Object>>> links = new ArrayList<>();
 
         public BeanFactoryProducer(Argument argument) {
             this.argument = argument;
@@ -198,15 +200,26 @@ public class Builder<T> {
         public Producer<T> processSpec() {
             uniqSameSubBuild();
             processDependencies();
+            processLinks();
             return this;
         }
 
-        @SuppressWarnings("unchecked")
+        protected void processLinks() {
+            // TODO nested object link process
+            // TODO handler not exist
+            links.forEach(properties -> link(properties.stream().map(this::getByIndex)));
+        }
+
         private void uniqSameSubBuild() {
             getChildren().stream()
                     .filter(producerRef -> producerRef.get() instanceof Builder.BeanFactoryProducer)
                     .collect(Collectors.groupingBy(Handler::get))
-                    .forEach((_ignore, refs) -> refs.stream().reduce((r1, r2) -> r1.link((Handler) r2)));
+                    .forEach((_ignore, refs) -> link(refs.stream()));
+        }
+
+        @SuppressWarnings("unchecked")
+        private void link(Stream<Handler<?>> handlers) {
+            handlers.reduce((r1, r2) -> r1.link((Handler) r2));
         }
 
         @Override
@@ -259,6 +272,10 @@ public class Builder<T> {
             return obj instanceof Builder.BeanFactoryProducer ?
                     ((Builder<?>.BeanFactoryProducer) obj).equalsWithBuilder(Builder.this)
                     : super.equals(obj);
+        }
+
+        public void addLink(List<String> properties) {
+            links.add(properties.stream().map(this::toIndex).collect(Collectors.toList()));
         }
     }
 }
