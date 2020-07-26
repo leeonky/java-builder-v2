@@ -1,7 +1,7 @@
 package com.github.leeonky.jfactory;
 
 class LinkProducer<T> extends Producer<T> {
-    final Linker<T> linker = new Linker<>();
+    Linker<T> linker = new Linker<>();
 
     @Override
     public T produce() {

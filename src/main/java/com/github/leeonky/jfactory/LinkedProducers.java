@@ -12,6 +12,11 @@ class LinkedProducers<T> {
         if (produced)
             return value;
         produced = true;
-        return value = producers.iterator().next().produce();
+        return value = makeValue();
+    }
+
+    private T makeValue() {
+        return producers.stream().filter(DestinedValueProducer.class::isInstance).findFirst()
+                .orElseGet(() -> producers.iterator().next()).produce();
     }
 }

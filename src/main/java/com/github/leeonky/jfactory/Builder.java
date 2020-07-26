@@ -24,9 +24,7 @@ public class Builder<T> {
     }
 
     public T create() {
-        T object = producer(null).processSpec().produce();
-        factorySet.getDataRepository().save(object);
-        return object;
+        return producer(null).processSpec().produce();
     }
 
     BeanFactoryProducer producer(String property) {

@@ -78,17 +78,35 @@ public abstract class Producer<T> {
             return producer;
         }
 
-        // TODO different producer type
+        // TO REFACTOR
         public Handler<T> link(Handler<T> another) {
-            LinkProducer<T> linkProducer = new LinkProducer<>();
-            linkProducer.linker.linkedProducers.producers.add(producer);
-            linkProducer.linker.linkedProducers.producers.add(another.get());
-
-            changeProducer(linkProducer);
-
-            LinkProducer<T> anotherLinkProducer = new LinkProducer<>();
-            anotherLinkProducer.linker.linkedProducers = linkProducer.linker.linkedProducers;
-            another.changeProducer(anotherLinkProducer);
+            if (producer instanceof LinkProducer) {
+                LinkProducer<T> linkProducer = (LinkProducer<T>) producer;
+                if (another.producer instanceof LinkProducer) {
+                    LinkProducer<T> anotherLinkProducer = (LinkProducer<T>) another.producer;
+                    linkProducer.linker.linkedProducers.producers.addAll(anotherLinkProducer.linker.linkedProducers.producers);
+                    anotherLinkProducer.linker.linkedProducers = linkProducer.linker.linkedProducers;
+                } else {
+                    linkProducer.linker.linkedProducers.producers.add(another.get());
+                    LinkProducer<T> anotherLinkProducer = new LinkProducer<>();
+                    anotherLinkProducer.linker = linkProducer.linker;
+                    another.changeProducer(anotherLinkProducer);
+                }
+            } else {
+                LinkProducer<T> linkProducer = new LinkProducer<>();
+                if (another.producer instanceof LinkProducer) {
+                    LinkProducer<T> anotherLinkProducer = (LinkProducer<T>) another.producer;
+                    anotherLinkProducer.linker.linkedProducers.producers.add(producer);
+                    linkProducer.linker = anotherLinkProducer.linker;
+                } else {
+                    linkProducer.linker.linkedProducers.producers.add(producer);
+                    linkProducer.linker.linkedProducers.producers.add(another.get());
+                    LinkProducer<T> anotherLinkProducer = new LinkProducer<>();
+                    anotherLinkProducer.linker = linkProducer.linker;
+                    another.changeProducer(anotherLinkProducer);
+                }
+                changeProducer(linkProducer);
+            }
             return this;
         }
 
