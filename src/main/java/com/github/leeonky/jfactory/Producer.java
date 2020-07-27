@@ -3,6 +3,8 @@ package com.github.leeonky.jfactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.github.leeonky.jfactory.LinkProducer.create;
+
 public abstract class Producer<T> {
     private Producer<?> parent;
 
@@ -59,6 +61,21 @@ public abstract class Producer<T> {
     protected void processDependencies() {
     }
 
+    protected Producer<T> link(Handler<T> another) {
+        return another.get().linkedByProducer(another, this);
+    }
+
+    protected Producer<T> linkedByProducer(Handler<T> another, Producer<T> producer) {
+        LinkProducer<T> linkProducer = create(producer);
+        another.changeProducer(linkProducer.absorb(this));
+        return linkProducer;
+    }
+
+    protected Producer<T> linkedByLink(Handler<T> another, LinkProducer<T> linkProducer) {
+        another.changeProducer(linkProducer.absorb(this));
+        return linkProducer;
+    }
+
     static class Handler<T> {
         private Producer<T> producer;
         private T value;
@@ -78,35 +95,8 @@ public abstract class Producer<T> {
             return producer;
         }
 
-        // TO REFACTOR
         public Handler<T> link(Handler<T> another) {
-            if (producer instanceof LinkProducer) {
-                LinkProducer<T> linkProducer = (LinkProducer<T>) producer;
-                if (another.producer instanceof LinkProducer) {
-                    LinkProducer<T> anotherLinkProducer = (LinkProducer<T>) another.producer;
-                    linkProducer.linker.linkedProducers.producers.addAll(anotherLinkProducer.linker.linkedProducers.producers);
-                    anotherLinkProducer.linker.linkedProducers = linkProducer.linker.linkedProducers;
-                } else {
-                    linkProducer.linker.linkedProducers.producers.add(another.get());
-                    LinkProducer<T> anotherLinkProducer = new LinkProducer<>();
-                    anotherLinkProducer.linker = linkProducer.linker;
-                    another.changeProducer(anotherLinkProducer);
-                }
-            } else {
-                LinkProducer<T> linkProducer = new LinkProducer<>();
-                if (another.producer instanceof LinkProducer) {
-                    LinkProducer<T> anotherLinkProducer = (LinkProducer<T>) another.producer;
-                    anotherLinkProducer.linker.linkedProducers.producers.add(producer);
-                    linkProducer.linker = anotherLinkProducer.linker;
-                } else {
-                    linkProducer.linker.linkedProducers.producers.add(producer);
-                    linkProducer.linker.linkedProducers.producers.add(another.get());
-                    LinkProducer<T> anotherLinkProducer = new LinkProducer<>();
-                    anotherLinkProducer.linker = linkProducer.linker;
-                    another.changeProducer(anotherLinkProducer);
-                }
-                changeProducer(linkProducer);
-            }
+            changeProducer(producer.link(another));
             return this;
         }
 

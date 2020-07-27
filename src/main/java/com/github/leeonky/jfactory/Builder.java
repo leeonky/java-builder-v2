@@ -210,7 +210,7 @@ public class Builder<T> {
 
         private void uniqSameSubBuild() {
             getChildren().stream()
-                    .filter(producerRef -> producerRef.get() instanceof Builder.BeanFactoryProducer)
+                    .filter(handler -> handler.get() instanceof Builder.BeanFactoryProducer)
                     .collect(Collectors.groupingBy(Handler::get))
                     .forEach((_ignore, refs) -> link(refs.stream()));
         }
