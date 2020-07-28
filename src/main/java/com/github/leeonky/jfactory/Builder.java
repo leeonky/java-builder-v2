@@ -149,31 +149,13 @@ public class Builder<T> {
         }
 
         @Override
-        public Handler<?> getByIndex(List<Object> index) {
-            LinkedList<Object> leftProperty = new LinkedList<>(index);
-            Handler<?> handler = propertyProducerRefs.get(leftProperty.removeFirst());
-            if (handler == null)
-                return null;
-            return leftProperty.isEmpty() ?
-                    handler
-                    : handler.get().getByIndex(leftProperty);
+        public Handler<?> getBy(Object key) {
+            return propertyProducerRefs.get(key);
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        public void changeByIndex(List<Object> index, Producer<?> producer) {
-            LinkedList<Object> leftProperty = new LinkedList<>(index);
-            String p = (String) leftProperty.removeFirst();
-            Handler<?> handler = propertyProducerRefs.get(p);
-            if (leftProperty.isEmpty()) {
-                if (handler == null)
-                    addProducer(p, producer);
-                else
-                    handler.changeProducer((Producer) producer);
-            } else {
-                if (handler != null)
-                    handler.get().changeByIndex(leftProperty, producer);
-            }
+        protected void changeBy(Object key, Producer<T> producer) {
+            addProducer((String) key, producer);
         }
 
         @Override
@@ -205,7 +187,7 @@ public class Builder<T> {
         @Override
         protected void processLinks() {
             propertyProducerRefs.forEach((k, v) -> v.get().processLinks());
-            links.forEach(properties -> link(properties.stream().map(this::getByIndex).collect(toList())));
+            links.forEach(properties -> link(properties.stream().map(this::getChildBy).collect(toList())));
         }
 
         private void uniqSameSubBuild() {

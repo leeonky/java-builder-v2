@@ -49,13 +49,37 @@ public abstract class Producer<T> {
         throw new IllegalStateException(String.format("`%s` has no nested producers", getClass().getName()));
     }
 
-    public Handler<?> getByIndex(List<Object> index) {
-        //return null if not collection or BeanFactoryProducer
+    protected Handler<?> getBy(Object key) {
         return null;
     }
 
-    public void changeByIndex(List<Object> index, Producer<?> producer) {
-        //do nothing if not collection or BeanFactoryProducer
+    protected void changeBy(Object key, Producer<T> producer) {
+    }
+
+    public Handler<?> getChildBy(List<Object> index) {
+        LinkedList<Object> leftProperty = new LinkedList<>(index);
+        Handler<?> handler = getBy(leftProperty.removeFirst());
+        if (handler == null)
+            return null;
+        return leftProperty.isEmpty() ?
+                handler
+                : handler.get().getChildBy(leftProperty);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void changeChildBy(List<Object> index, Producer<?> producer) {
+        LinkedList<Object> leftProperty = new LinkedList<>(index);
+        Object key = leftProperty.removeFirst();
+        Handler handler = getBy(key);
+        if (leftProperty.isEmpty()) {
+            if (handler == null)
+                changeBy(key, (Producer<T>) producer);
+            else
+                handler.changeProducer(producer);
+        } else {
+            if (handler != null)
+                handler.get().changeChildBy(leftProperty, producer);
+        }
     }
 
     protected void processLinks() {

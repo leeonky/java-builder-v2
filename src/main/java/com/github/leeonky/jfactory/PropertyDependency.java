@@ -21,9 +21,9 @@ class PropertyDependency<T> {
 
     @SuppressWarnings("unchecked")
     public void processDependency(Producer<?> producer, Argument argument) {
-        producer.changeByIndex(property, new DependencyProducer(
+        producer.changeChildBy(property, new DependencyProducer(
                 dependencies.stream().map(index -> (Supplier<?>) () -> {
-                    Producer.Handler<?> handler = producer.getByIndex(index);
+                    Producer.Handler<?> handler = producer.getChildBy(index);
                     return handler != null ? handler.produce() : getProperty(argument.willGetCurrent().get(), index);
                 }).collect(Collectors.toList()),
                 rule));
