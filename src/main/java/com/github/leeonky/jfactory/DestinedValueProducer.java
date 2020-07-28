@@ -14,6 +14,6 @@ public class DestinedValueProducer<T> extends Producer<T> {
 
     @Override
     protected Producer<T> changeTo(Producer<T> producer) {
-        return this;
+        return producer instanceof LinkProducer ? producer : this;
     }
 }

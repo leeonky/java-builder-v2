@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class _09_Link {
 
@@ -18,6 +19,7 @@ class _09_Link {
     @Accessors(chain = true)
     public static class Bean {
         public String str1, str2, str3, str4;
+        public String s1, s2, s3, s4;
     }
 
     @Getter
@@ -33,6 +35,7 @@ class _09_Link {
     public static class BeanWrapper {
         public Bean bean;
         public String str;
+        public Bean another;
     }
 
     @Nested
@@ -173,6 +176,65 @@ class _09_Link {
         }
     }
 
-    // TODO link dependency suggested property strategy...
-    // TODO link with read only property value
+    @Nested
+    class ProducerPriority {
+
+        @Test
+        void use_property_value_in_link() {
+            factorySet.factory(Bean.class).define((argument, spec) -> {
+                spec.link("str1", "str2", "str3", "str4");
+                spec.property("str2").dependsOn("s1", obj -> obj);
+                spec.property("str3").value("hello");
+            });
+
+            assertThat(factorySet.type(Bean.class).property("str1", "input").create())
+                    .hasFieldOrPropertyWithValue("str1", "input")
+                    .hasFieldOrPropertyWithValue("str2", "input")
+                    .hasFieldOrPropertyWithValue("str3", "input")
+                    .hasFieldOrPropertyWithValue("str4", "input")
+            ;
+        }
+
+        @Test
+        void should_raise_error_when_has_ambiguous() {
+            factorySet.factory(Bean.class).define((argument, spec) -> {
+                spec.link("str1", "str2");
+            });
+
+            assertThrows(RuntimeException.class, () -> factorySet.type(Bean.class)
+                    .property("str1", "input1")
+                    .property("str2", "input2")
+                    .create());
+        }
+
+        @Test
+        void use_dependency_value_in_link() {
+            factorySet.factory(Bean.class).define((argument, spec) -> {
+                spec.link("str1", "str3", "str2", "str4");
+                spec.property("str2").dependsOn("s1", obj -> obj);
+                spec.property("str3").value("hello");
+            });
+
+            assertThat(factorySet.type(Bean.class).property("s1", "input").create())
+                    .hasFieldOrPropertyWithValue("str1", "input")
+                    .hasFieldOrPropertyWithValue("str2", "input")
+                    .hasFieldOrPropertyWithValue("str3", "input")
+                    .hasFieldOrPropertyWithValue("str4", "input")
+            ;
+        }
+
+        @Test
+        void use_suggested_value_in_link() {
+            factorySet.factory(Bean.class).define((argument, spec) -> {
+                spec.link("str1", "str2", "str3");
+                spec.property("str3").value("hello");
+            });
+
+            assertThat(factorySet.type(Bean.class).create())
+                    .hasFieldOrPropertyWithValue("str1", "hello")
+                    .hasFieldOrPropertyWithValue("str2", "hello")
+                    .hasFieldOrPropertyWithValue("str3", "hello")
+            ;
+        }
+    }
 }

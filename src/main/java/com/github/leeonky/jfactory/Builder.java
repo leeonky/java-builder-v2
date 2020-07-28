@@ -4,9 +4,9 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 
 public class Builder<T> {
     private final Map<String, Object> properties = new LinkedHashMap<>();
@@ -205,19 +205,19 @@ public class Builder<T> {
         @Override
         protected void processLinks() {
             propertyProducerRefs.forEach((k, v) -> v.get().processLinks());
-            links.forEach(properties -> link(properties.stream().map(this::getByIndex)));
+            links.forEach(properties -> link(properties.stream().map(this::getByIndex).collect(toList())));
         }
 
         private void uniqSameSubBuild() {
             getChildren().stream()
                     .filter(handler -> handler.get() instanceof Builder.BeanFactoryProducer)
                     .collect(Collectors.groupingBy(Handler::get))
-                    .forEach((_ignore, refs) -> link(refs.stream()));
+                    .forEach((_ignore, refs) -> link(refs));
         }
 
         @SuppressWarnings("unchecked")
-        private void link(Stream<Handler<?>> handlers) {
-            handlers.filter(Objects::nonNull).reduce((r1, r2) -> r1.link((Handler) r2));
+        private Optional<Handler<?>> link(List<Handler<?>> handlers) {
+            return handlers.stream().filter(Objects::nonNull).reduce((r1, r2) -> r1.link((Handler) r2));
         }
 
         @Override
@@ -228,7 +228,7 @@ public class Builder<T> {
 
         public void addDependency(String property, String[] properties, Function<Object[], Object> dependency) {
             List<Object> propertyIndexChain = toIndex(property);
-            List<List<Object>> dependencyIndexChains = Arrays.stream(properties).map(this::toIndex).collect(Collectors.toList());
+            List<List<Object>> dependencyIndexChains = Arrays.stream(properties).map(this::toIndex).collect(toList());
             ((Builder<?>.BeanFactoryProducer) getRoot()).dependencies.put(propertyIndexChain,
                     new PropertyDependency<>(propertyIndexChain, dependencyIndexChains, deps -> dependency.apply(deps.toArray())));
         }
@@ -241,7 +241,7 @@ public class Builder<T> {
                 } catch (Exception ignore) {
                     return s;
                 }
-            }).collect(Collectors.toList()));
+            }).collect(toList()));
             return propertyIndexChain;
         }
 
@@ -273,7 +273,7 @@ public class Builder<T> {
         }
 
         public void addLink(List<String> properties) {
-            links.add(properties.stream().map(this::toIndex).collect(Collectors.toList()));
+            links.add(properties.stream().map(this::toIndex).collect(toList()));
         }
     }
 }
