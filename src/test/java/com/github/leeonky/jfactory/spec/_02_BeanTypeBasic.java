@@ -16,12 +16,12 @@ class _02_BeanTypeBasic {
     @Test
     void default_creation() {
         assertThat(factorySet.create(Bean.class))
-                .hasFieldOrPropertyWithValue("stringValue", "stringValue1")
+                .hasFieldOrPropertyWithValue("stringValue", "stringValue#1")
                 .hasFieldOrPropertyWithValue("intValue", 1)
         ;
 
         assertThat(factorySet.create(Bean.class))
-                .hasFieldOrPropertyWithValue("stringValue", "stringValue2")
+                .hasFieldOrPropertyWithValue("stringValue", "stringValue#2")
                 .hasFieldOrPropertyWithValue("intValue", 2)
         ;
     }

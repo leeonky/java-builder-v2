@@ -16,8 +16,8 @@ class _01_JavaLangType {
 
     @Test
     void create_default_string() {
-        assertCreate(String.class, "string1");
-        assertCreate(String.class, "string2");
+        assertCreate(String.class, "string#1");
+        assertCreate(String.class, "string#2");
     }
 
     private void assertCreate(Class<?> type, Object expect) {

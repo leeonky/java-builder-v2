@@ -33,7 +33,7 @@ public class ValueFactories {
         put(String.class, new ValueFactory<>(String.class).construct(argument ->
                 (argument.getProperty() == null ?
                         "string"
-                        : argument.getProperty()) + argument.getSequence()));
+                        : argument.getProperty()) + "#" + argument.getSequence()));
 
         put(BigInteger.class, new ValueFactory<>(BigInteger.class).construct(argument ->
                 BigInteger.valueOf(argument.getSequence())));
