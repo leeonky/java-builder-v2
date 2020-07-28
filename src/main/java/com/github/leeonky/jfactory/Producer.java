@@ -58,6 +58,9 @@ public abstract class Producer<T> {
         //do nothing if not collection or BeanFactoryProducer
     }
 
+    protected void processLinks() {
+    }
+
     protected void processDependencies() {
     }
 

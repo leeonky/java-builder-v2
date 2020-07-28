@@ -202,9 +202,10 @@ public class Builder<T> {
             return this;
         }
 
+        @Override
         protected void processLinks() {
-            // TODO nested object link process
             // TODO handler not exist
+            propertyProducerRefs.forEach((k, v) -> v.get().processLinks());
             links.forEach(properties -> link(properties.stream().map(this::getByIndex)));
         }
 

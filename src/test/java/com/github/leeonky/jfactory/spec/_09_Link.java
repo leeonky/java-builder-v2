@@ -27,6 +27,14 @@ class _09_Link {
         public Bean[] beans;
     }
 
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    public static class BeanWrapper {
+        public Bean bean;
+        public String str;
+    }
+
     @Nested
     class FlattenLink {
 
@@ -118,5 +126,25 @@ class _09_Link {
         }
     }
 
+    @Nested
+    class NestedLink {
+
+        @Test
+        void support_nest_object_link() {
+            factorySet.factory(Bean.class).define((argument, spec) -> spec.link("str1", "str2"));
+
+            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
+                spec.property("bean").type(Bean.class);
+                spec.link("str", "bean.str1");
+            });
+
+            BeanWrapper beanWrapper = factorySet.create(BeanWrapper.class);
+
+            assertThat(beanWrapper.getBean().getStr1()).isEqualTo(beanWrapper.getBean().getStr2());
+            assertThat(beanWrapper.getBean().getStr1()).isEqualTo(beanWrapper.getStr());
+        }
+    }
+
     // TODO link dependency suggested property strategy...
+    // TODO override and ignore link
 }
