@@ -204,7 +204,6 @@ public class Builder<T> {
 
         @Override
         protected void processLinks() {
-            // TODO handler not exist
             propertyProducerRefs.forEach((k, v) -> v.get().processLinks());
             links.forEach(properties -> link(properties.stream().map(this::getByIndex)));
         }
@@ -218,7 +217,7 @@ public class Builder<T> {
 
         @SuppressWarnings("unchecked")
         private void link(Stream<Handler<?>> handlers) {
-            handlers.reduce((r1, r2) -> r1.link((Handler) r2));
+            handlers.filter(Objects::nonNull).reduce((r1, r2) -> r1.link((Handler) r2));
         }
 
         @Override

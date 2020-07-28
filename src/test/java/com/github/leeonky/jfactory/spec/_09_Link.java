@@ -145,6 +145,34 @@ class _09_Link {
         }
     }
 
+    @Nested
+    class ProducerNotValid {
+
+        @Test
+        void should_ignore_link_when_producer_not_valid() {
+            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
+                spec.link("str", "bean.str1");
+            });
+
+            BeanWrapper beanWrapper = factorySet.create(BeanWrapper.class);
+
+            assertThat(beanWrapper.getBean()).isNull();
+            assertThat(beanWrapper.getStr()).isInstanceOf(String.class);
+        }
+
+        @Test
+        void should_ignore_link_when_producer_object_is_specified() {
+            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
+                spec.link("str", "bean.str1");
+            });
+
+            BeanWrapper beanWrapper = factorySet.type(BeanWrapper.class).property("bean", new Bean().setStr1("hello")).create();
+
+            assertThat(beanWrapper.getBean().getStr1()).isEqualTo("hello");
+            assertThat(beanWrapper.getStr()).isNotEqualTo("hello");
+        }
+    }
+
     // TODO link dependency suggested property strategy...
-    // TODO override and ignore link
+    // TODO link with read only property value
 }
