@@ -162,18 +162,6 @@ class _09_Link {
             assertThat(beanWrapper.getBean()).isNull();
             assertThat(beanWrapper.getStr()).isInstanceOf(String.class);
         }
-
-        @Test
-        void should_ignore_link_when_producer_object_is_specified() {
-            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
-                spec.link("str", "bean.str1");
-            });
-
-            BeanWrapper beanWrapper = factorySet.type(BeanWrapper.class).property("bean", new Bean().setStr1("hello")).create();
-
-            assertThat(beanWrapper.getBean().getStr1()).isEqualTo("hello");
-            assertThat(beanWrapper.getStr()).isNotEqualTo("hello");
-        }
     }
 
     @Nested
@@ -235,6 +223,39 @@ class _09_Link {
                     .hasFieldOrPropertyWithValue("str2", "hello")
                     .hasFieldOrPropertyWithValue("str3", "hello")
             ;
+        }
+    }
+
+    @Nested
+    class ToDo {
+
+        // TODO link with read only property value
+        // parent: property link dep value
+        // has value / no value
+
+        @Test
+        void should_return_property_value_when_parent_object_is_property() {
+            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
+                spec.link("bean.str1", "str");
+            });
+
+            BeanWrapper beanWrapper = factorySet.type(BeanWrapper.class).property("bean", new Bean().setStr1("hello")).create();
+
+            assertThat(beanWrapper.getStr()).isEqualTo("hello");
+        }
+
+        //        @Test
+        void toDo() {
+            factorySet.factory(Bean.class).define((argument, spec) -> spec.property("str1").value("hello"));
+
+            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
+                spec.property("bean").type(Bean.class);
+                spec.link("bean.str1", "str");
+                spec.link("bean", "another");
+            });
+
+            assertThat(factorySet.type(BeanWrapper.class).property("another", new Bean().setStr1("world")).create())
+                    .hasFieldOrPropertyWithValue("str", "world");
         }
     }
 }

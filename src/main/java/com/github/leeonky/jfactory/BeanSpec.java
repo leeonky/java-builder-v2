@@ -1,10 +1,11 @@
 package com.github.leeonky.jfactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static java.util.Arrays.asList;
 
 public class BeanSpec<T> implements Spec<T> {
     private final Builder<T>.BeanFactoryProducer beanFactoryProducer;
@@ -27,8 +28,11 @@ public class BeanSpec<T> implements Spec<T> {
     }
 
     @Override
-    public void link(String... properties) {
-        beanFactoryProducer.addLink(asList(properties));
+    public void link(String property, String... others) {
+        List<String> properties = new ArrayList<>();
+        properties.add(property);
+        properties.addAll(Arrays.asList(others));
+        beanFactoryProducer.addLink(properties);
     }
 
     public class PropertySpec {

@@ -187,7 +187,32 @@ public class Builder<T> {
         @Override
         protected void processLinks() {
             propertyProducerRefs.forEach((k, v) -> v.get().processLinks());
-            links.forEach(properties -> link(properties.stream().map(this::getChildBy).collect(toList())));
+            links.forEach(properties -> {
+                List<List<Object>> noProducerLinks = new ArrayList<>();
+                link(mapToHandlersAndCollectNoProducerLinks(properties, noProducerLinks)).ifPresent(handler ->
+                        noProducerLinks.forEach(index -> createProducerForNoProducerLink(handler, index)));
+            });
+        }
+
+        @SuppressWarnings("unchecked")
+        private void createProducerForNoProducerLink(Handler<?> handler, List<Object> index) {
+            LinkedList<Object> leftIndex = new LinkedList<>(index);
+            tryGetChildBy(leftIndex).forLink(leftIndex).ifPresent(p -> {
+                Producer<?> producer = handler.get();
+                if (producer instanceof LinkProducer)
+                    ((LinkProducer) producer).absorb(p);
+                else
+                    handler.changeProducer(LinkProducer.create(producer).absorb((Producer) p));
+            });
+        }
+
+        private List<Handler<?>> mapToHandlersAndCollectNoProducerLinks(List<List<Object>> properties, List<List<Object>> noProducerLinks) {
+            return properties.stream().map(i -> {
+                Handler<?> handler = getChildBy(i);
+                if (handler == null)
+                    noProducerLinks.add(i);
+                return handler;
+            }).filter(Objects::nonNull).collect(toList());
         }
 
         private void uniqSameSubBuild() {
@@ -199,7 +224,7 @@ public class Builder<T> {
 
         @SuppressWarnings("unchecked")
         private Optional<Handler<?>> link(List<Handler<?>> handlers) {
-            return handlers.stream().filter(Objects::nonNull).reduce((r1, r2) -> r1.link((Handler) r2));
+            return handlers.stream().reduce((r1, r2) -> r1.link((Handler) r2));
         }
 
         @Override

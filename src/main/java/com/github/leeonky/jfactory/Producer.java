@@ -66,6 +66,14 @@ public abstract class Producer<T> {
                 : handler.get().getChildBy(leftProperty);
     }
 
+    public Producer<?> tryGetChildBy(LinkedList<Object> index) {
+        Handler<?> handler = getBy(index.getFirst());
+        if (handler == null)
+            return this;
+        index.removeFirst();
+        return handler.get().tryGetChildBy(index);
+    }
+
     @SuppressWarnings("unchecked")
     public void changeChildBy(List<Object> index, Producer<?> producer) {
         LinkedList<Object> leftProperty = new LinkedList<>(index);
@@ -101,6 +109,10 @@ public abstract class Producer<T> {
     protected Producer<T> linkedByLink(Handler<T> another, LinkProducer<T> linkProducer) {
         another.changeProducer(linkProducer.absorb(this));
         return linkProducer;
+    }
+
+    protected Optional<Producer<?>> forLink(LinkedList<Object> leftIndex) {
+        return Optional.empty();
     }
 
     static class Handler<T> {
