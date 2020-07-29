@@ -1,6 +1,6 @@
 package com.github.leeonky.jfactory;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class LinkedProducers<T> {
-    private Set<Producer<T>> producers = new HashSet<>();
+    private Set<Producer<T>> producers = new LinkedHashSet<>();
     private boolean produced = false;
     private T value;
 

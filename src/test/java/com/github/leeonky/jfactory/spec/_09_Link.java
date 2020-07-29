@@ -39,6 +39,14 @@ class _09_Link {
         public Bean another;
     }
 
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    public static class Strings {
+        public String[] strings;
+        public String value;
+    }
+
     @Nested
     class FlattenLink {
 
@@ -151,6 +159,17 @@ class _09_Link {
             Beans beans = factorySet.type(Beans.class).property("bean", bean).create();
             assertThat(beans.getBeans())
                     .containsExactly(bean, bean);
+        }
+
+        @Test
+        void support_link_with_value_type_collection_element_and_property() {
+            factorySet.factory(Strings.class).define((argument, spec) -> {
+                spec.property("value").value("hello");
+                spec.link("strings[0]", "value");
+            });
+
+            Strings strings = factorySet.create(Strings.class);
+            assertThat(strings.getStrings()[0]).isEqualTo(strings.getValue()).isEqualTo("hello");
         }
     }
 

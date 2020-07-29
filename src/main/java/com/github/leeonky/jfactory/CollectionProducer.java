@@ -9,10 +9,12 @@ import java.util.Objects;
 
 class CollectionProducer<T> extends Producer<T> {
     private final BeanClass<?> collectionType;
+    private final Argument argument;
     private List<Handler<?>> elementHandlers = new ArrayList<>();
 
-    public CollectionProducer(BeanClass<?> collectionType) {
+    public CollectionProducer(BeanClass<?> collectionType, Argument argument) {
         this.collectionType = collectionType;
+        this.argument = argument;
     }
 
     @Override
@@ -27,9 +29,16 @@ class CollectionProducer<T> extends Producer<T> {
 
     @SuppressWarnings("unchecked")
     public void setElementProducer(int index, Producer<?> producer) {
-        for (int i = elementHandlers.size(); i <= index; i++)
-            elementHandlers.add(new Handler<>(new SuggestedValueProducer<>(() -> null), this));
+        fillCollectionWithDefaultValue(index);
         elementHandlers.get(index).changeProducer((Producer) producer);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void fillCollectionWithDefaultValue(int index) {
+        for (int i = elementHandlers.size(); i <= index; i++)
+            elementHandlers.add(new Handler<>(
+                    new ValueFactoryProducer((BeanFactory) new ValueFactories.ValueFactory(collectionType.getType())
+                            .construct(argument -> collectionType.createDefault()), argument), this));
     }
 
     @Override
@@ -47,8 +56,7 @@ class CollectionProducer<T> extends Producer<T> {
 
     @Override
     public Handler<?> getBy(Object key) {
-        for (int i = elementHandlers.size(); i <= (int) key; i++)
-            elementHandlers.add(new Handler<>(new SuggestedValueProducer<>(() -> null), this));
+        fillCollectionWithDefaultValue((Integer) key);
         return elementHandlers.get((int) key);
     }
 

@@ -40,6 +40,7 @@ class _08_Dependency {
     @Setter
     public static class BeanArray {
         private Bean[] beans;
+        private Bean bean;
         private int intValue;
     }
 
@@ -151,6 +152,20 @@ class _08_Dependency {
 
             assertThat(factorySet.type(BeanArray.class).property("beans[0]", bean).create().getBeans())
                     .containsOnly(bean, bean, bean);
+        }
+
+        @Test
+        void dependency_chain_with_array_and_property() {
+            factorySet.factory(BeanArray.class).define((argument, spec) -> {
+                spec.property("beans[1]").dependsOn("beans[0]", obj -> obj);
+                spec.property("beans[0]").dependsOn("bean", obj -> obj);
+            });
+
+            Bean bean = new Bean();
+
+            BeanArray beanArray = factorySet.type(BeanArray.class).property("bean", bean).create();
+            assertThat(beanArray.getBeans()).containsOnly(bean, bean);
+            assertThat(beanArray.getBean()).isEqualTo(bean);
         }
 
         @Nested

@@ -121,7 +121,7 @@ public class Builder<T> {
             beanFactory.getProperties().forEach((name, propertyWriter) -> {
                 Producer<?> producer = factorySet.getValueFactories().getOfDefault(propertyWriter.getPropertyType())
                         .map(fieldFactory -> (Producer<?>) new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))
-                        .orElseGet(() -> new CollectionProducer<>(BeanClass.create(propertyWriter.getPropertyType())));
+                        .orElseGet(() -> new CollectionProducer<>(BeanClass.create(propertyWriter.getPropertyType()), argument.forNested(name)));
                 addProducer(name, producer);
             });
         }
@@ -267,7 +267,7 @@ public class Builder<T> {
         public CollectionProducer<?> getOrAddCollectionProducer(String property) {
             Handler<?> handler = propertyProducerRefs.get(property);
             return handler == null ?
-                    addProducer(property, new CollectionProducer<>(beanFactory.getType().getPropertyWriter(property).getPropertyTypeWrapper()))
+                    addProducer(property, new CollectionProducer<>(beanFactory.getType().getPropertyWriter(property).getPropertyTypeWrapper(), argument.forNested(property)))
                     : (CollectionProducer<?>) handler.get();
         }
 
