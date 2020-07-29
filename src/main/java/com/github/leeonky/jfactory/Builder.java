@@ -1,6 +1,6 @@
 package com.github.leeonky.jfactory;
 
-import com.github.leeonky.util.BeanClass;
+import com.github.leeonky.util.PropertyWriter;
 
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -118,12 +118,9 @@ public class Builder<T> {
         }
 
         private void collectPropertyDefaultProducer(Argument argument) {
-            beanFactory.getProperties().forEach((name, propertyWriter) -> {
-                Producer<?> producer = factorySet.getValueFactories().getOfDefault(propertyWriter.getPropertyType())
-                        .map(fieldFactory -> (Producer<?>) new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))
-                        .orElseGet(() -> new CollectionProducer<>(BeanClass.create(propertyWriter.getPropertyType()), argument.forNested(name)));
-                addProducer(name, producer);
-            });
+            beanFactory.getProperties().forEach((name, propertyWriter) ->
+                    factorySet.getValueFactories().defaultProducer(argument, name, propertyWriter.getPropertyType())
+                            .ifPresent(producer -> addProducer(name, producer)));
         }
 
         @SuppressWarnings("unchecked")
@@ -162,7 +159,16 @@ public class Builder<T> {
 
         @Override
         public Handler<?> getBy(Object key) {
-            return propertyProducerRefs.get(key);
+            String p = (String) key;
+            Handler<?> handler = propertyProducerRefs.get(p);
+            if (handler == null) {
+                PropertyWriter<T> propertyWriter = beanFactory.getType().getPropertyWriter(p);
+                if (propertyWriter.getPropertyType().isArray() || Iterable.class.isAssignableFrom(propertyWriter.getPropertyType())) {
+                    addProducer(p, new CollectionProducer<>(propertyWriter.getPropertyTypeWrapper(), propertyWriter.getElementType(), argument.forNested(p), factorySet.getValueFactories()));
+                    handler = propertyProducerRefs.get(p);
+                }
+            }
+            return handler;
         }
 
         @Override
@@ -265,10 +271,7 @@ public class Builder<T> {
         }
 
         public CollectionProducer<?> getOrAddCollectionProducer(String property) {
-            Handler<?> handler = propertyProducerRefs.get(property);
-            return handler == null ?
-                    addProducer(property, new CollectionProducer<>(beanFactory.getType().getPropertyWriter(property).getPropertyTypeWrapper(), argument.forNested(property)))
-                    : (CollectionProducer<?>) handler.get();
+            return (CollectionProducer<?>) getBy(property).get();
         }
 
         @Override

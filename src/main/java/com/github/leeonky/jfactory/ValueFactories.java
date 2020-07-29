@@ -74,6 +74,11 @@ public class ValueFactories {
         return Optional.ofNullable(beanFactory);
     }
 
+    public Optional<Producer<?>> defaultProducer(Argument argument, String name, Class<?> type) {
+        return getOfDefault(type)
+                .map(fieldFactory -> (Producer<?>) new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)));
+    }
+
     public static class ValueFactory<T> extends BeanFactory<T> {
 
         public ValueFactory(Class<T> type) {

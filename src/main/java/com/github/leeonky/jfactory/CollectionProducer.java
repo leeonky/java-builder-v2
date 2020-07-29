@@ -9,12 +9,16 @@ import java.util.Objects;
 
 class CollectionProducer<T> extends Producer<T> {
     private final BeanClass<?> collectionType;
+    private final Class<T> elementType;
     private final Argument argument;
+    private final ValueFactories valueFactories;
     private List<Handler<?>> elementHandlers = new ArrayList<>();
 
-    public CollectionProducer(BeanClass<?> collectionType, Argument argument) {
+    public CollectionProducer(BeanClass<?> collectionType, Class<T> elementType, Argument argument, ValueFactories valueFactories) {
         this.collectionType = collectionType;
+        this.elementType = elementType;
         this.argument = argument;
+        this.valueFactories = valueFactories;
     }
 
     @Override
@@ -33,12 +37,10 @@ class CollectionProducer<T> extends Producer<T> {
         elementHandlers.get(index).changeProducer((Producer) producer);
     }
 
-    @SuppressWarnings("unchecked")
     private void fillCollectionWithDefaultValue(int index) {
         for (int i = elementHandlers.size(); i <= index; i++)
-            elementHandlers.add(new Handler<>(
-                    new ValueFactoryProducer((BeanFactory) new ValueFactories.ValueFactory(collectionType.getType())
-                            .construct(argument -> collectionType.createDefault()), argument), this));
+            valueFactories.defaultProducer(argument, argument.getProperty(), elementType)
+                    .ifPresent(producer -> elementHandlers.add(new Handler<>(producer, this)));
     }
 
     @Override

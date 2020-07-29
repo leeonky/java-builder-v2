@@ -6,6 +6,7 @@ import com.github.leeonky.jfactory.FactorySet;
 import com.github.leeonky.jfactory.MixIn;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -50,6 +51,13 @@ class _07_ComplexBuildArgs {
     @Setter
     public static class BeansWrapper {
         private Beans beans;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true)
+    public static class Strings {
+        public String[] strings;
     }
 
     public static class ABean extends Definition<Bean> {
@@ -207,6 +215,12 @@ class _07_ComplexBuildArgs {
 
     @Nested
     class CollectionProperty {
+
+        @Test
+        void default_element_value_should_generated_from_value_factory() {
+            assertThat(factorySet.type(Strings.class).property("strings[1]", "").create().getStrings()[0])
+                    .isInstanceOf(String.class);
+        }
 
         @Test
         void support_element_in_build() {
