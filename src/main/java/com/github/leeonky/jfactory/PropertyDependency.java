@@ -24,13 +24,13 @@ class PropertyDependency<T> {
         producer.changeChildBy(property, new DependencyProducer(
                 dependencies.stream().map(index -> (Supplier<?>) () -> {
                     Producer.Handler<?> handler = producer.getChildBy(index);
-                    return handler != null ? handler.produce() : getProperty(argument.willGetCurrent().get(), index, producer, argument);
+                    return handler != null ? handler.produce() : getProperty(argument.willGetCurrent().get(), index);
                 }).collect(Collectors.toList()),
                 rule));
     }
 
     @SuppressWarnings("unchecked")
-    private Object getProperty(Object object, List<Object> properties, Producer<?> producer, Argument argument) {
+    private Object getProperty(Object object, List<Object> properties) {
 
         BeanClass beanClass = BeanClass.create(object.getClass());
         try {

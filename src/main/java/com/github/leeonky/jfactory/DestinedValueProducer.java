@@ -27,7 +27,10 @@ public class DestinedValueProducer<T> extends Producer<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected Optional<Producer<?>> forLink(LinkedList<Object> leftIndex) {
+        if (value == null)
+            return empty();
         BeanClass beanClass = BeanClass.create(value.getClass());
         try {
             return of(new DestinedValueProducer<>(beanClass.getPropertyChainValue(value, leftIndex)));

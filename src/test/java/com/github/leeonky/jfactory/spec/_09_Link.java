@@ -238,11 +238,7 @@ class _09_Link {
     }
 
     @Nested
-    class ToDo {
-
-        // TODO link with read only property value
-        // parent: property link dep value
-        // has value / no value
+    class LinkToNoProducerField {
 
         @Test
         void should_return_property_value_when_parent_object_is_property() {
@@ -250,11 +246,41 @@ class _09_Link {
                 spec.link("bean.str1", "str");
             });
 
-            BeanWrapper beanWrapper = factorySet.type(BeanWrapper.class).property("bean", new Bean().setStr1("hello")).create();
+            assertThat(factorySet.type(BeanWrapper.class).property("bean", new Bean().setStr1("hello")).create().getStr()).isEqualTo("hello");
 
-            assertThat(beanWrapper.getStr()).isEqualTo("hello");
+            assertThat(factorySet.type(BeanWrapper.class).property("bean", null).create().getStr()).isInstanceOf(String.class);
         }
 
+        @Test
+        void should_use_suggested_value_when_parent_object_is_suggested_value() {
+            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
+                spec.property("bean").value(new Bean().setStr1("hello"));
+                spec.link("bean.str1", "str");
+            });
+
+            assertThat(factorySet.type(BeanWrapper.class).create().getStr()).isEqualTo("hello");
+
+            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
+                spec.property("bean").value(null);
+                spec.link("bean.str1", "str");
+            });
+
+            assertThat(factorySet.type(BeanWrapper.class).create().getStr()).isInstanceOf(String.class);
+        }
+
+        @Test
+        void should_use_as_suggested_value_when_parent_object_is_link() {
+            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
+                spec.link("bean", "another");
+                spec.link("bean.str1", "str");
+            });
+
+            assertThat(factorySet.type(BeanWrapper.class).property("another", new Bean().setStr1("hello")).create().getStr()).isEqualTo("hello");
+        }
+    }
+
+    @Nested
+    class ToDo {
         //        @Test
         void toDo() {
             factorySet.factory(Bean.class).define((argument, spec) -> spec.property("str1").value("hello"));

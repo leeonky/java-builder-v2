@@ -1,9 +1,14 @@
 package com.github.leeonky.jfactory;
 
+import com.github.leeonky.util.BeanClass;
+import com.github.leeonky.util.NullPointerInChainException;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.github.leeonky.jfactory.LinkProducer.create;
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
 
 public abstract class Producer<T> {
     private Producer<?> parent;
@@ -111,12 +116,17 @@ public abstract class Producer<T> {
         return linkProducer;
     }
 
+    @SuppressWarnings("unchecked")
     protected Optional<Producer<?>> forLink(LinkedList<Object> leftIndex) {
-        return Optional.empty();
-    }
-
-    protected int getSorter() {
-        return -1;
+        T value = produce();
+        if (value == null)
+            return empty();
+        BeanClass beanClass = BeanClass.create(value.getClass());
+        try {
+            return of(new SuggestedValueProducer<>(() -> beanClass.getPropertyChainValue(value, leftIndex)));
+        } catch (NullPointerInChainException e) {
+            return empty();
+        }
     }
 
     static class Handler<T> {
