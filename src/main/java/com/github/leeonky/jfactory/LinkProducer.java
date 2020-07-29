@@ -31,8 +31,13 @@ class LinkProducer<T> extends Producer<T> {
     }
 
     public LinkProducer<T> absorb(Producer<T> producer) {
+        linker.addProducer(producer);
+        return copyLink();
+    }
+
+    public LinkProducer<T> copyLink() {
         LinkProducer<T> anotherLinkProducer = new LinkProducer<>();
-        anotherLinkProducer.linker = linker.addProducer(producer);
+        anotherLinkProducer.linker = linker;
         return anotherLinkProducer;
     }
 }

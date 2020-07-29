@@ -117,7 +117,7 @@ public class Builder<T> {
 
         private void collectPropertyDefaultProducer(Argument argument) {
             beanFactory.getProperties().forEach((name, propertyWriter) ->
-                    factorySet.getValueFactories().of(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
+                    factorySet.getValueFactories().getOfDefault(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
                             addProducer(name, new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))));
         }
 
@@ -130,9 +130,16 @@ public class Builder<T> {
         @Override
         public T produce() {
             T value = beanFactory.create(argument);
-            propertyProducerRefs.forEach((k, v) -> beanFactory.getType().setPropertyValue(value, k, v.produce()));
+            propertyProducerRefs.entrySet().stream().filter(e -> produceFirst(e.getValue().get()))
+                    .forEach(e -> beanFactory.getType().setPropertyValue(value, e.getKey(), e.getValue().produce()));
+            propertyProducerRefs.entrySet().stream().filter(e -> !produceFirst(e.getValue().get()))
+                    .forEach(e -> beanFactory.getType().setPropertyValue(value, e.getKey(), e.getValue().produce()));
             factorySet.getDataRepository().save(value);
             return value;
+        }
+
+        private boolean produceFirst(Producer<?> value) {
+            return value instanceof DestinedValueProducer || value instanceof SuggestedValueProducer;
         }
 
         @Override

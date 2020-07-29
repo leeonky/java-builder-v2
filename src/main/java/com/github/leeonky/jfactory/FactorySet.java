@@ -28,7 +28,7 @@ public class FactorySet {
     }
 
     private <T> BeanFactory<T> createFactory(Class<T> type) {
-        return valueFactories.of(type).orElseGet(() -> new BeanFactory<>(BeanClass.create(type)));
+        return valueFactories.get(type).orElseGet(() -> new BeanFactory<>(BeanClass.create(type)));
     }
 
     public <T> Builder<T> type(Class<T> type) {

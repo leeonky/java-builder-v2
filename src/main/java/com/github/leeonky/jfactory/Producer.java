@@ -115,6 +115,10 @@ public abstract class Producer<T> {
         return Optional.empty();
     }
 
+    protected int getSorter() {
+        return -1;
+    }
+
     static class Handler<T> {
         private Producer<T> producer;
         private T value;

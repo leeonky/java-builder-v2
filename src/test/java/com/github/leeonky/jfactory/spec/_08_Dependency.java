@@ -444,13 +444,11 @@ class _08_Dependency {
         @Test
         void read_property_value_from_object() {
             Bean bean = new Bean();
-            factorySet.factory(Beans.class)
-                    .construct(argument -> new Beans().setBean2(bean))
-                    .define((argument, spec) ->
-                            spec.property("bean1").dependsOn("bean2", obj -> obj)
-                    );
+            factorySet.factory(Beans.class).define((argument, spec) ->
+                    spec.property("bean1").dependsOn("bean2", obj -> obj)
+            );
 
-            assertThat(factorySet.create(Beans.class))
+            assertThat(factorySet.type(Beans.class).property("bean2", bean).create())
                     .hasFieldOrPropertyWithValue("bean1", bean)
                     .hasFieldOrPropertyWithValue("bean2", bean)
             ;
@@ -459,14 +457,12 @@ class _08_Dependency {
         @Test
         void read_property_value_from_sub_object() {
             Bean bean = new Bean().setIntValue(100);
-            factorySet.factory(Beans.class)
-                    .construct(argument -> new Beans().setBean2(bean))
-                    .define((argument, spec) -> {
-                        spec.property("bean1").type(Bean.class);
-                        spec.property("bean1.intValue").dependsOn("bean2.intValue", obj -> obj);
-                    });
+            factorySet.factory(Beans.class).define((argument, spec) -> {
+                spec.property("bean1").type(Bean.class);
+                spec.property("bean1.intValue").dependsOn("bean2.intValue", obj -> obj);
+            });
 
-            assertThat(factorySet.create(Beans.class).getBean1())
+            assertThat(factorySet.type(Beans.class).property("bean2", bean).create().getBean1())
                     .hasFieldOrPropertyWithValue("intValue", 100)
                     .isNotEqualTo(bean);
         }

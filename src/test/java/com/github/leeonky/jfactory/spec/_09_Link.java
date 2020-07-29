@@ -108,6 +108,17 @@ class _09_Link {
             assertThat(bean.str2).isEqualTo(bean.str3);
             assertThat(bean.str3).isEqualTo(bean.str4);
         }
+
+        @Test
+        void support_link_with_bean_object() {
+            factorySet.factory(BeanWrapper.class).define((argument, spec) -> {
+                spec.link("bean", "another");
+            });
+
+            Bean bean = new Bean();
+            assertThat(factorySet.type(BeanWrapper.class).property("another", bean).create())
+                    .hasFieldOrPropertyWithValue("bean", bean);
+        }
     }
 
     @Nested

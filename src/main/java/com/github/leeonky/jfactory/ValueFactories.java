@@ -60,8 +60,18 @@ public class ValueFactories {
     }};
 
     @SuppressWarnings("unchecked")
-    public <T> Optional<BeanFactory<T>> of(Class<T> type) {
+    public <T> Optional<BeanFactory<T>> get(Class<T> type) {
         return Optional.ofNullable((BeanFactory<T>) buildIns.get(type));
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> Optional<BeanFactory<T>> getOfDefault(Class<T> type) {
+        BeanFactory<T> beanFactory = (BeanFactory<T>) buildIns.get(type);
+        if (beanFactory == null) {
+            if (!(type.isArray() || Iterable.class.isAssignableFrom(type)))
+                beanFactory = (BeanFactory<T>) new ValueFactory<>(type).construct(argument -> BeanClass.create(type).createDefault());
+        }
+        return Optional.ofNullable(beanFactory);
     }
 
     public static class ValueFactory<T> extends BeanFactory<T> {
