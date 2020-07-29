@@ -27,6 +27,7 @@ class _09_Link {
     @Accessors(chain = true)
     public static class Beans {
         public Bean[] beans;
+        public Bean bean;
     }
 
     @Getter
@@ -137,6 +138,19 @@ class _09_Link {
 
             assertThat(beans.beans[0].str1).isEqualTo(beans.beans[1].str1);
             assertThat(beans.beans[1].str1).isEqualTo(beans.beans[2].str1);
+        }
+
+        @Test
+        void support_link_with_bean_object() {
+            factorySet.factory(Beans.class).define((argument, spec) -> {
+                spec.link("beans[0]", "beans[1]");
+                spec.link("beans[1]", "bean");
+            });
+
+            Bean bean = new Bean();
+            Beans beans = factorySet.type(Beans.class).property("bean", bean).create();
+            assertThat(beans.getBeans())
+                    .containsExactly(bean, bean);
         }
     }
 
@@ -280,9 +294,10 @@ class _09_Link {
     }
 
     @Nested
-    class ToDo {
+    class Limitation {
+
         //        @Test
-        void toDo() {
+        void linked_producer_was_changed_by_other_link() {
             factorySet.factory(Bean.class).define((argument, spec) -> spec.property("str1").value("hello"));
 
             factorySet.factory(BeanWrapper.class).define((argument, spec) -> {

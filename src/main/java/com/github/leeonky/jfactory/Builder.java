@@ -1,5 +1,7 @@
 package com.github.leeonky.jfactory;
 
+import com.github.leeonky.util.BeanClass;
+
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -116,9 +118,12 @@ public class Builder<T> {
         }
 
         private void collectPropertyDefaultProducer(Argument argument) {
-            beanFactory.getProperties().forEach((name, propertyWriter) ->
-                    factorySet.getValueFactories().getOfDefault(propertyWriter.getPropertyType()).ifPresent(fieldFactory ->
-                            addProducer(name, new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))));
+            beanFactory.getProperties().forEach((name, propertyWriter) -> {
+                Producer<?> producer = factorySet.getValueFactories().getOfDefault(propertyWriter.getPropertyType())
+                        .map(fieldFactory -> (Producer<?>) new ValueFactoryProducer<>(fieldFactory, argument.forNested(name)))
+                        .orElseGet(() -> new CollectionProducer<>(BeanClass.create(propertyWriter.getPropertyType())));
+                addProducer(name, producer);
+            });
         }
 
         @SuppressWarnings("unchecked")
