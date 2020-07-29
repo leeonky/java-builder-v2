@@ -125,7 +125,7 @@ public class Builder<T> {
 
         @SuppressWarnings("unchecked")
         public <P extends Producer<?>> P addProducer(String property, P producer) {
-            return (P) propertyProducerRefs.computeIfAbsent(property, k -> new Handler<>(new SuggestedValueProducer<>(() -> null), this))
+            return (P) propertyProducerRefs.computeIfAbsent(property, k -> new Handler<>(new SuggestedValueProducer<>(() -> null)))
                     .changeProducer((Producer) producer);
         }
 
@@ -150,21 +150,13 @@ public class Builder<T> {
         }
 
         @Override
-        public Object indexOf(Producer<?> sub) {
-            for (Map.Entry<String, Handler<?>> e : propertyProducerRefs.entrySet())
-                if (Objects.equals(e.getValue().get(), sub))
-                    return e.getKey();
-            throw new IllegalStateException();
-        }
-
-        @Override
         public Handler<?> getBy(Object key) {
             String p = (String) key;
             Handler<?> handler = propertyProducerRefs.get(p);
             if (handler == null) {
                 PropertyWriter<T> propertyWriter = beanFactory.getType().getPropertyWriter(p);
                 if (propertyWriter.getPropertyType().isArray() || Iterable.class.isAssignableFrom(propertyWriter.getPropertyType())) {
-                    addProducer(p, new CollectionProducer<>(propertyWriter.getPropertyTypeWrapper(), propertyWriter.getElementType(), argument.forNested(p), factorySet.getValueFactories()));
+                    addProducer(p, new CollectionProducer<>(propertyWriter, argument.forNested(p), factorySet.getValueFactories()));
                     handler = propertyProducerRefs.get(p);
                 }
             }
@@ -254,20 +246,18 @@ public class Builder<T> {
         public void addDependency(String property, String[] properties, Function<Object[], Object> dependency) {
             List<Object> propertyIndexChain = toIndex(property);
             List<List<Object>> dependencyIndexChains = Arrays.stream(properties).map(this::toIndex).collect(toList());
-            ((Builder<?>.BeanFactoryProducer) getRoot()).dependencies.put(propertyIndexChain,
+            dependencies.put(propertyIndexChain,
                     new PropertyDependency<>(propertyIndexChain, dependencyIndexChains, deps -> dependency.apply(deps.toArray())));
         }
 
         private List<Object> toIndex(String property) {
-            List<Object> propertyIndexChain = new ArrayList<>(getIndex());
-            propertyIndexChain.addAll(Arrays.stream(property.split("[\\[\\].]")).filter(s -> !s.isEmpty()).map(s -> {
+            return new ArrayList<>(Arrays.stream(property.split("[\\[\\].]")).filter(s -> !s.isEmpty()).map(s -> {
                 try {
                     return Integer.valueOf(s);
                 } catch (Exception ignore) {
                     return s;
                 }
             }).collect(toList()));
-            return propertyIndexChain;
         }
 
         public CollectionProducer<?> getOrAddCollectionProducer(String property) {

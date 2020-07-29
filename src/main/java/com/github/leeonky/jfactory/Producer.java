@@ -11,7 +11,6 @@ import static java.util.Optional.empty;
 import static java.util.Optional.of;
 
 public abstract class Producer<T> {
-    private Producer<?> parent;
 
     static Collection<Handler<?>> collectChildren(Collection<Handler<?>> producers) {
         return producers.stream().flatMap(handler -> {
@@ -34,24 +33,6 @@ public abstract class Producer<T> {
 
     protected Producer<T> changeFrom(Builder<T>.BeanFactoryProducer beanFactoryProducer) {
         return this;
-    }
-
-    public List<Object> getIndex() {
-        if (parent == null)
-            return new ArrayList<>();
-        List<Object> indexes = parent.getIndex();
-        indexes.add(parent.indexOf(this));
-        return indexes;
-    }
-
-    public Producer<?> getRoot() {
-        if (parent == null)
-            return this;
-        return parent.getRoot();
-    }
-
-    protected Object indexOf(Producer<?> element) {
-        throw new IllegalStateException(String.format("`%s` has no nested producers", getClass().getName()));
     }
 
     protected Handler<?> getBy(Object key) {
@@ -134,17 +115,14 @@ public abstract class Producer<T> {
         private T value;
         private boolean produced = false;
 
-        Handler(Producer<T> producer, Producer<?> parent) {
-            producer.parent = parent;
+        Handler(Producer<T> producer) {
             this.producer = Objects.requireNonNull(producer);
         }
 
         public <P extends Producer<T>> P changeProducer(P producer) {
             if (producer == this.producer)
                 return producer;
-            Producer<?> parent = this.producer.parent;
             this.producer = this.producer.changeTo(producer);
-            this.producer.parent = parent;
             return producer;
         }
 
